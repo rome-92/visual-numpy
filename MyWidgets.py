@@ -124,6 +124,10 @@ class MainWindow(QMainWindow):
         self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
         self.view.model().formulas.clear()
         self.view.model().incons.clear()
+        self.view.model().history.clear()
+        self.view.model().history.append((self.view.model().dataContainer.copy(),
+                self.view.model().formulas.copy()))
+
 
 
     def importFile(self):
@@ -137,6 +141,9 @@ class MainWindow(QMainWindow):
                     self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
                     self.view.model().formulas.clear()
                     self.view.model().incons.clear()
+                    self.view.model().history.clear()
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
+                            self.view.model().formulas.copy()))
                     for rowNumber,row in enumerate(reader):
                         for columnNumber,column in enumerate(row):
                             index = self.view.model().createIndex(rowNumber,columnNumber)
@@ -222,11 +229,14 @@ class MainWindow(QMainWindow):
                     self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
                     self.view.model().formulas.clear()
                     self.view.model().incons.clear()
+                    self.view.model().history.clear()
                     for rowNumber,row in enumerate(loadedModel):
                         for columnNumber,column in enumerate(row):
                             index = self.view.model().createIndex(rowNumber,columnNumber)
                             self.view.model().setData(index,column)
                     self.view.model().formulas = formulas
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
+                            self.view.model().formulas.copy()))
                 MainWindow.currentFile = name
                 info = name+ ' was succesfully loaded'
                 self.statusBar().showMessage(info,5000)
