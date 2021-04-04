@@ -42,6 +42,15 @@ class MyModel(QAbstractTableModel):
         self.alignmentDict = {}
         self.history = []
         self.history.append((self.dataContainer.copy(),self.formulas.copy()))
+        self.thousandsSep = True
+
+    def enableThousandsSep(self):
+        '''Enables thousands separator'''
+        self.thousandsSep = True
+
+    def disableThousandsSep(self):
+        '''Disables thousands separator'''
+        self.thousandsSep = False
 
     def mimeTypes(self):
         '''Intended to provide drop of csv data and app specific data'''
@@ -232,8 +241,15 @@ class MyModel(QAbstractTableModel):
                 if returnValue['f1'].imag == 0: 
                     #if not it returns only the real part in string form
                     if returnValue['f1'].real.is_integer():
-                        return '{:,d}'.format(int(returnValue['f1'].real))
-                    return '{:,.8f}'.format(returnValue['f1'].real)
+                        if self.thousandsSep:
+                            return '{:,d}'.format(int(returnValue['f1'].real))
+                        else:
+                            return '{:d}'.format(int(returnValue['f1'].real))
+                    else:
+                        if self.thousandsSep:
+                            return '{:,.8f}'.format(returnValue['f1'].real)
+                        else:
+                            return '{:.8f}'.format(returnValue['f1'].real)
                 else:
                     #if it does have an imaginary part it returns the real and im part without parenteses
                     return returnValue['f0'].strip('()')

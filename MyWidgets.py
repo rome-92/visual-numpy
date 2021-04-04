@@ -33,7 +33,7 @@ import numbers
 import traceback,random,csv,pickle
 import numpy as np
 
-version = '1.0.0-a.1'
+version = '1.0.0-a.2'
 
 class MainWindow(QMainWindow):
     
@@ -49,6 +49,7 @@ class MainWindow(QMainWindow):
         self.view.setModel(MyModel(self.view))
         self.view.setItemDelegate(MyDelegate(self.view))
         self.setCentralWidget(self.view)
+# Instantiate QActions
         newFile = QAction('&New File', self)
         newFile.setShortcut('Ctrl+N')
         newFile.setStatusTip('Create new file')
@@ -78,10 +79,17 @@ class MainWindow(QMainWindow):
         importFile.setShortcut('Ctrl+I')
         importFile.setStatusTip('Import File to csv')
         importFile.triggered.connect(self.importFile)
+        thsndsSep = QAction('Thousands separator',self)
+        thsndsSep.setStatusTip('Enable/Disable thousands separator')
+        thsndsSep.setCheckable(True)
+        thsndsSep.setChecked(True)
+        thsndsSep.triggered.connect(self.setThousandsSep)
         about = QAction('&About',self)
         about.setStatusTip('Show about information')
         about.triggered.connect(self.helpAbout)
+# Instantiate menuBar
         mainMenu = self.menuBar()
+# Add actions to menus
         fileMenu = mainMenu.addMenu('&File')
         fileMenu.addAction(newFile)
         fileMenu.addAction(loadFile)
@@ -93,6 +101,8 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(importFile)
         fileMenu.addSeparator()
         fileMenu.addAction(saveArrayAs)
+        formatMenu = mainMenu.addMenu('For&mat')
+        formatMenu.addAction(thsndsSep)
         helpMenu = self.menuBar().addMenu('&Help')
         helpMenu.addAction(about)
         toolBar = QToolBar('Command Toolbar')
@@ -259,6 +269,12 @@ class MainWindow(QMainWindow):
             np.savetxt(name,finalModel,delimiter=',',fmt='%-1s')
             info = name+ ' was succesfully exported'
             self.statusBar().showMessage(info,5000)
+
+    def setThousandsSep(self):
+        if self.sender().isChecked():
+            self.view.model().enableThousandsSep()
+        else:
+            self.view.model().disableThousandsSep()
     
     def helpAbout(self):
         QMessageBox.about(self, "About Visual Numpy",
