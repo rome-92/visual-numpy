@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         return QSize(1280,720)
 
     def createNew(self):
+        '''Creates a new file and clears history'''
         dataType = np.dtype('U32,D')
         self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
         self.view.model().formulas.clear()
@@ -271,6 +272,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(info,5000)
 
     def setThousandsSep(self):
+        '''Simple enable/disable thousands separator'''
         if self.sender().isChecked():
             self.view.model().enableThousandsSep()
         else:

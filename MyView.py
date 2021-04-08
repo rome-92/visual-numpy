@@ -120,14 +120,12 @@ class MyView(QTableView):
         '''Basic center text functionality'''
         selectionModel = self.selectionModel()
         selectedIndexes = selectionModel.selectedIndexes()
-        for action in self.actions():
-            if action.objectName() == 'center':
-                if not action.isChecked():
-                    for index in selectedIndexes:
-                        self.model().setData(index,int(Qt.AlignLeft|Qt.AlignVCenter),role=Qt.TextAlignmentRole)
-                else:
-                    for index in selectedIndexes:
-                        self.model().setData(index,Qt.AlignCenter,role=Qt.TextAlignmentRole)
+        if not self.sender().isChecked():
+            for index in selectedIndexes:
+                self.model().setData(index,int(Qt.AlignLeft|Qt.AlignVCenter),role=Qt.TextAlignmentRole)
+        else:
+            for index in selectedIndexes:
+                self.model().setData(index,Qt.AlignCenter,role=Qt.TextAlignmentRole)
 
     def mergeCells(self):
         '''Basic merge cell funcionality'''
