@@ -164,7 +164,6 @@ class MyView(QTableView):
 
     def selectionChanged(self,selected,deselected):
         '''Handles proper response under corresponding state for selection changes'''
-        self.overlay.createRect()
         selectionModel = self.selectionModel()
         selectedIndexes = selectionModel.selectedIndexes()
         if not globals_.formula_mode: 
@@ -282,6 +281,7 @@ class MyView(QTableView):
                 commandLineEdit.setFocus(Qt.OtherFocusReason)
                 commandLineEdit.deselect()
         super().selectionChanged(selected,deselected)
+        self.overlay.createRect()
 
     def createFormula(self,text,arrayRanges,scalars,domain):
         '''Checks for formula integrity and calls the formula constructor'''
@@ -514,7 +514,7 @@ class MyView(QTableView):
         selected = selectionModel.selectedIndexes()
         self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
         for action in self.actions():
-            if not action.isEnabled():
+            if action.iconText() == 'Paste':
                 action.setDisabled(False)
 
     def cutAction(self):
@@ -524,7 +524,7 @@ class MyView(QTableView):
         selected = selectionModel.selectedIndexes()
         self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
         for action in self.actions():
-            if not action.isEnabled():
+            if action.iconText() == 'Paste':
                 action.setDisabled(False)
 
     def pasteAction(self):
