@@ -40,6 +40,9 @@ class MyModel(QAbstractTableModel):
         self.domainHighlight = {}
         self.incons = {}
         self.alignmentDict = {}
+        self.fonts = {}
+        self.background = {}
+        self.foreground = {}
         self.history = []
         self.history.append((self.dataContainer.copy(),self.formulas.copy()))
         self.thousandsSep = True
@@ -261,11 +264,14 @@ class MyModel(QAbstractTableModel):
             elif self.domainHighlight:
                 if (index.row(),index.column()) in self.domainHighlight:
                     return self.domainHighlight[index.row(),index.column()]
-            elif self.incons:
-                if (index.row(),index.column()) in self.incons:
-                    return self.incons[index.row(),index.column()]
+            else:
+                return self.background.get((index.row(),index.column()),globals_.defaultBackground)
+        if role == Qt.FontRole:
+            return self.fonts.get((index.row(),index.column()),globals_.defaultFont)
         if role == Qt.TextAlignmentRole:
             return self.alignmentDict.get((index.row(),index.column()),int(Qt.AlignLeft|Qt.AlignVCenter))
+        if role == Qt.ForegroundRole:
+            return self.foreground.get((index.row(),index.column()),globals_.defaultForeground)
 
     def setData(self,index,value,role=Qt.EditRole,formulaTriggered=False):
         '''Sets the appropiate data for the corresponding role'''
@@ -296,9 +302,6 @@ class MyModel(QAbstractTableModel):
             if formulaTriggered == 'ERASE':
                 for f in self.formulas:
                     if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        for cRow,cColumn in f.domain:
-                            if (cRow,cColumn) in self.incons:
-                                del self.incons[cRow,cColumn]
                         self.formulas.remove(f)
                         break
                 for f in self.formulaSnap.copy():
@@ -317,9 +320,6 @@ class MyModel(QAbstractTableModel):
             elif formulaTriggered == False:
                 for f in self.formulas:
                     if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        for cRow,cColumn in f.domain:
-                            if (cRow,cColumn) in self.incons:
-                                del self.incons[cRow,cColumn]
                         self.formulas.remove(f)
                         break
                 for f in self.formulas:
@@ -333,14 +333,21 @@ class MyModel(QAbstractTableModel):
             if globals_.formula_mode:
                 self.highlight = ((index.row(),index.column()),value)
                 return True
-            elif globals_.formulaIncon:
-                self.incons[index.row(),index.column()] = value
+            elif globals_.domainHighlight:
+                self.domainHighlight[index.row(),index.column()]=value
                 return True
             else:
-                self.domainHighlight[index.row(),index.column()]=value
+                self.background[index.row(),index.column()] = value
                 return True
         elif role == Qt.TextAlignmentRole:
             self.alignmentDict[index.row(),index.column()] = value
+            return True
+        elif role == Qt.FontRole:
+            self.fonts[index.row(),index.column()] = value
+            return True
+        elif role == Qt.ForegroundRole:
+            self.foreground[index.row(),index.column()] = value
+            return True
     
     def flags(self,index):
         if index.isValid():

@@ -20,13 +20,16 @@
 
 from PySide6.QtCore import QTimer, QSize, QEvent, Qt, Signal
 from PySide6.QtWidgets import (QMainWindow, QLineEdit, QToolBar, QLabel, QFileDialog,
-                               QMessageBox)
-from PySide6.QtGui import QAction, QGuiApplication
+                               QMessageBox, QFontComboBox, QComboBox, QColorDialog,
+                               QPushButton)
+from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFontDatabase, QFont,
+                           QPixmap,QIcon,QBrush)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
 from MyView import MyView
 from MyModel import MyModel
 from MyDelegate import MyDelegate
+import rcIcons
 import globals_
 import platform
 import numbers
@@ -48,7 +51,21 @@ class MainWindow(QMainWindow):
         self.view = MyView(self)
         self.view.setModel(MyModel(self.view))
         self.view.setItemDelegate(MyDelegate(self.view))
-        self.setCentralWidget(self.view)
+        self.setCentralWidget(self.view) 
+        self.fontColor = QPushButton(self)
+        self.fontColor.setObjectName('FontColor')
+        self.fontColor.color_ = (240,240,240,255)
+        self.fontColor.setIcon(QPixmap(':text_color.png'))
+        self.fontColor.setIconSize(QSize(25,25))
+        self.fontColor.setToolTip('Text color')
+        self.backgroundColor = QPushButton(self)
+        self.backgroundColor.setIcon(QPixmap(':background_color.png'))
+        self.backgroundColor.setIconSize(QSize(25,25))
+        self.backgroundColor.setToolTip('Background color')
+        self.backgroundColor.setObjectName('BackgroundColor')
+        self.backgroundColor.color_ = (240,240,240,255)
+        self.fontColor.clicked.connect(self.showColorDialog)
+        self.backgroundColor.clicked.connect(self.showColorDialog)
 # Instantiate QActions
         newFile = QAction('&New File', self)
         newFile.setShortcut('Ctrl+N')
@@ -84,6 +101,66 @@ class MainWindow(QMainWindow):
         thsndsSep.setCheckable(True)
         thsndsSep.setChecked(True)
         thsndsSep.triggered.connect(self.setThousandsSep)
+        self.alignL = QAction('Align left', self)
+        self.alignL.setStatusTip('Align text to the left')
+        self.alignL.setIcon(QPixmap(':align_left.png'))
+        self.alignL.setCheckable(True)
+        self.alignL.setChecked(True)
+        self.alignL.triggered.connect(self.alignLeft)
+        self.alignC = QAction('Align center', self)
+        self.alignC.setStatusTip('Align text to the center')
+        self.alignC.setIcon(QPixmap(':align_center.png'))
+        self.alignC.setCheckable(True)
+        self.alignC.setChecked(False)
+        self.alignC.triggered.connect(self.alignCenter)
+        self.alignR = QAction('Align right', self)
+        self.alignR.setStatusTip('Align to the right')
+        self.alignR.setIcon(QPixmap(':align_right.png'))
+        self.alignR.setCheckable(True)
+        self.alignR.setChecked(False)
+        self.alignR.triggered.connect(self.alignRight)
+        self.alignU = QAction('Align top', self)
+        self.alignU.setStatusTip('Align text on top')
+        self.alignU.setIcon(QPixmap(':align_top.png'))
+        self.alignU.setCheckable(True)
+        self.alignU.setChecked(False)
+        self.alignU.triggered.connect(self.alignUp)
+        self.alignM = QAction('Vertically center', self)
+        self.alignM.setStatusTip('Align text to the center vertically')
+        self.alignM.setIcon(QPixmap(':vertically_center.png'))
+        self.alignM.setCheckable(True)
+        self.alignM.setChecked(True)
+        self.alignM.triggered.connect(self.alignMiddle)
+        self.alignD = QAction('Align bottom', self)
+        self.alignD.setStatusTip('Align text to bottom')
+        self.alignD.setIcon(QPixmap(':align_bottom.png'))
+        self.alignD.setCheckable(True)
+        self.alignD.setChecked(False)
+        self.alignD.triggered.connect(self.alignDown)
+        self.boldAction = QAction('Bold',self)
+        self.boldAction.setStatusTip('Bold font')
+        self.boldAction.setIcon(QPixmap(':bold.png'))
+        self.boldAction.setCheckable(True)
+        self.boldAction.triggered.connect(self.bold)
+        self.italicAction = QAction('Italic',self)
+        self.italicAction.setStatusTip('Italicize font')
+        self.italicAction.setIcon(QPixmap(':italic.png'))
+        self.italicAction.setCheckable(True)
+        self.italicAction.triggered.connect(self.italic)
+        self.underlineAction = QAction('Underline',self)
+        self.underlineAction.setStatusTip('Underline font')
+        self.underlineAction.setIcon(QPixmap(':underline.png'))
+        self.underlineAction.setCheckable(True)
+        self.underlineAction.triggered.connect(self.underline)
+# Create action group
+        self.alignmentGroup1 = QActionGroup(self)
+        self.alignmentGroup1.addAction(self.alignL)
+        self.alignmentGroup1.addAction(self.alignC)
+        self.alignmentGroup1.addAction(self.alignR)
+        self.alignmentGroup2 = QActionGroup(self)
+        self.alignmentGroup2.addAction(self.alignU)
+        self.alignmentGroup2.addAction(self.alignM)
+        self.alignmentGroup2.addAction(self.alignD)
         about = QAction('&About',self)
         about.setStatusTip('Show about information')
         about.triggered.connect(self.helpAbout)
@@ -105,6 +182,7 @@ class MainWindow(QMainWindow):
         formatMenu.addAction(thsndsSep)
         helpMenu = self.menuBar().addMenu('&Help')
         helpMenu.addAction(about)
+# End adding actions
         toolBar = QToolBar('Command Toolbar')
         toolBar.setAllowedAreas(Qt.TopToolBarArea)
         toolBar.setMovable(False)
@@ -113,10 +191,32 @@ class MainWindow(QMainWindow):
         toolBar.addWidget(commandLabel)
         toolBar.addWidget(self.commandLineEdit)
         self.addToolBar(Qt.TopToolBarArea,toolBar)
+        self.addToolBarBreak(Qt.TopToolBarArea)
+# Second toolbar
+        formatToolbar = QToolBar('Format Toolbar')
+        formatToolbar.setAllowedAreas(Qt.TopToolBarArea)
+        formatToolbar.setMovable(False)
+        self.fontsComboBox = QFontComboBox()
+        self.fontsComboBox.currentFontChanged.connect(self.updateFont)
+        self.pointSize = QComboBox()
+        self.pointSize.addItems(globals_.POINT_SIZES)
+        self.pointSize.setMaxVisibleItems(10)
+        self.pointSize.setStyleSheet('''QComboBox {combobox-popup: 0;}''')
+        self.pointSize.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.pointSize.setCurrentIndex(6)
+        self.pointSize.currentTextChanged.connect(self.updateFont)
+        formatToolbar.addWidget(self.fontsComboBox)
+        formatToolbar.addWidget(self.pointSize)
+        formatToolbar.addWidget(self.fontColor)
+        formatToolbar.addWidget(self.backgroundColor)
+        formatToolbar.addActions([self.alignL,self.alignC,self.alignR,self.alignU,self.alignM,self.alignD,self.boldAction,self.italicAction,self.underlineAction])
+        self.addToolBar(Qt.TopToolBarArea,formatToolbar)
         self.commandLineEdit.returnCommand.connect(self.calculate)
         self.statusBar()
-        QTimer.singleShot(0,self.center)
         self.setStyleSheet(self.styleSheet)
+        globals_.currentFont = QFont(self.fontsComboBox.currentFont())
+        globals_.defaultFont = QFont(globals_.currentFont)
+        QTimer.singleShot(0,self.center)
  
     def center(self):
         '''Centers MainwWindow on the screen'''
@@ -138,8 +238,6 @@ class MainWindow(QMainWindow):
         self.view.model().history.clear()
         self.view.model().history.append((self.view.model().dataContainer.copy(),
                 self.view.model().formulas.copy()))
-
-
 
     def importFile(self):
         '''Imports csv files'''
@@ -277,7 +375,213 @@ class MainWindow(QMainWindow):
             self.view.model().enableThousandsSep()
         else:
             self.view.model().disableThousandsSep()
+
+    def alignLeft(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup2.actions():
+            if action.isChecked():
+                if action.text() == 'Align top':
+                    vertical = Qt.AlignTop
+                elif action.text() == 'Vertically center':
+                    vertical = Qt.AlignVCenter
+                else:
+                    vertical = Qt.AlignBottom
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(Qt.AlignLeft|vertical)
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
+
+    def alignCenter(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup2.actions():
+            if action.isChecked():
+                if action.text() == 'Align top':
+                    vertical = Qt.AlignTop
+                elif action.text() == 'Vertically center':
+                    vertical = Qt.AlignVCenter
+                else:
+                    vertical = Qt.AlignBottom
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(Qt.AlignHCenter|vertical) 
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
+    def alignRight(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup2.actions():
+            if action.isChecked():
+                if action.text() == 'Align top':
+                    vertical = Qt.AlignTop
+                elif action.text() == 'Vertically center':
+                    vertical = Qt.AlignVCenter
+                else:
+                    vertical = Qt.AlignBottom
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(Qt.AlignRight|vertical) 
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
+    def alignUp(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup1.actions():
+            if action.isChecked():
+                if action.text() == 'Align left':
+                    horizontal = Qt.AlignLeft
+                elif action.text() == 'Align center':
+                    horizontal = Qt.AlignHCenter
+                else:
+                    horizontal = Qt.AlignRight
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignTop) 
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+        
+
+    def alignMiddle(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup1.actions():
+            if action.isChecked():
+                if action.text() == 'Align left':
+                    horizontal = Qt.AlignLeft
+                elif action.text() == 'Align center':
+                    horizontal = Qt.AlignHCenter
+                else:
+                    horizontal = Qt.AlignRight
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignVCenter) 
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+        
+
+    def alignDown(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for action in self.alignmentGroup1.actions():
+            if action.isChecked():
+                if action.text() == 'Align left':
+                    horizontal = Qt.AlignLeft
+                elif action.text() == 'Align center':
+                    horizontal = Qt.AlignHCenter
+                else:
+                    horizontal = Qt.AlignRight
+        for i in selected:
+            model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignBottom) 
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
+    def updateFont(self,varg=None):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        if type(varg) == QFont:
+            globals_.currentFont = QFont(varg)
+            pointSize = float(self.pointSize.currentText())
+            globals_.currentFont.setPointSizeF(pointSize)
+        elif type(varg) == str:
+            font = self.fontsComboBox.currentFont()
+            globals_.currentFont = QFont(font)
+            pointSize = float(varg)
+            globals_.currentFont.setPointSizeF(pointSize)
+        for index in selected:
+            self.view.model().setData(index,globals_.currentFont,role=Qt.FontRole)
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
+    def bold(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for index in selected:
+            font = QFont(model.fonts.get((index.row(),index.column()),globals_.defaultFont))
+            if self.sender().isChecked():
+                font.setBold(True)
+            else:
+                font.setBold(False)
+            model.setData(index,font,role=Qt.FontRole)
+        model.dataChanged.emit(selected[0],selected[-1])
     
+    def italic(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for index in selected:
+            font = QFont(model.fonts.get((index.row(),index.column()),globals_.defaultFont))
+            if self.sender().isChecked():
+                font.setItalic(True)
+            else:
+                font.setItalic(False)
+            model.setData(index,font,role=Qt.FontRole)
+        model.dataChanged.emit(selected[0],selected[-1])
+
+    def underline(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        model = self.view.model()
+        for index in selected:
+            font = QFont(model.fonts.get((index.row(),index.column()),globals_.defaultFont))
+            if self.sender().isChecked():
+                font.setUnderline(True)
+            else:
+                font.setUnderline(False)
+            model.setData(index,font,role=Qt.FontRole)
+        model.dataChanged.emit(selected[0],selected[-1])
+
+    def showColorDialog(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.sender().color_ = color.getRgb()
+        else:
+            return
+        fontR = str(self.fontColor.color_[0])
+        fontG = str(self.fontColor.color_[1])
+        fontB = str(self.fontColor.color_[2])
+        fontA = str(self.fontColor.color_[3])
+        backgroundR = str(self.backgroundColor.color_[0])
+        backgroundG = str(self.backgroundColor.color_[1])
+        backgroundB = str(self.backgroundColor.color_[2])
+        backgroundA = str(self.backgroundColor.color_[3])
+        styleSheet = ''' 
+        MyView {selection-background-color: rgba(173, 255, 115,25); selection-color: black;}
+        QPushButton#FontColor {background-color: rgba(%s, %s, %s, %s);}
+        QPushButton#BackgroundColor {background-color: rgba(%s, %s, %s, %s);}
+        '''%(fontR,fontG,fontB,fontA,backgroundR,backgroundG,backgroundB,backgroundA)
+        self.setStyleSheet(styleSheet)
+        model = self.view.model()
+        if not selected:
+            return
+        for index in selected:
+            if self.sender().objectName() == 'FontColor':
+                model.setData(index,QBrush(color),role=Qt.ForegroundRole)
+            else:
+                model.setData(index,QBrush(color),role=Qt.BackgroundRole)
+        self.view.model().dataChanged.emit(selected[0],selected[-1])
+
     def helpAbout(self):
         QMessageBox.about(self, "About Visual Numpy",
                 """<b>Visual Numpy</b> version {0}
@@ -414,7 +718,9 @@ class MainWindow(QMainWindow):
                         return
                 for line,rY in zip(result,range(resultIndexRow,resultIndexRow+resultRows)):
                     for dE,cX in zip(line,range(resultIndexColumn,resultIndexColumn+resultColumns)):
-                        self.view.model().setData(self.view.model().createIndex(rY,cX),dE,formulaTriggered=True)
+                        ind =self.view.model().createIndex(ry,cx)
+                        self.view.model().setData(ind,globals_.currentFont,role=Qt.FontRole)
+                        self.view.model().setData(ind,dE,formulaTriggered=True)
                 startIndex = self.view.model().index(resultIndexRow,resultIndexColumn)
                 endIndex = self.view.model().index(resultIndexRow+resultRows-1,
                         resultIndexColumn+resultColumns-1)
@@ -437,7 +743,9 @@ class MainWindow(QMainWindow):
                 #for line,cX in zip(result,range(resultIndexColumn,resultIndexColumn+resultColumns)):
                     #self.view.model().setData(self.view.model().createIndex(resultIndexRow,cX),line,formulaTriggered=True)
                 for row,ry in zip(result,range(resultIndexRow,resultIndexRow+resultRows)):
-                    self.view.model().setData(self.view.model().createIndex(ry,resultIndexColumn),row,formulaTriggered=True)
+                    ind = self.view.model().createIndex(ry,resultIndexColumn)
+                    self.view.model().setData(ind,globals_.currentFont,role=Qt.FontRole)
+                    self.view.model().setData(ind,row,formulaTriggered=True)
                 startIndex = self.view.model().index(resultIndexRow,resultIndexColumn)
                 #endIndex = self.view.model().index(resultIndexRow,
                         #resultIndexColumn+resultColumns-1)
@@ -466,6 +774,7 @@ class MainWindow(QMainWindow):
             startIndex = self.view.model().createIndex(resultIndexRow,resultIndexColumn)
             endIndex = startIndex
             self.view.model().formulaSnap = self.view.model().formulas.copy()
+            self.view.model().setData(startIndex,globals_.currentFont,role=Qt.FontRole)
             self.view.model().setData(startIndex,result,formulaTriggered=True)
             self.view.model().dataChanged.emit(startIndex,endIndex)
             self.commandLineEdit.clearFocus()
@@ -515,4 +824,3 @@ class CommandLineEdit(QLineEdit):
     def focusOutEvent(self,event):
         super().focusOutEvent(event)
         globals_formula_mode = False
-

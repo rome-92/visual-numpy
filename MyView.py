@@ -70,12 +70,7 @@ class MyView(QTableView):
         unmerge.setObjectName('unmerge')
         unmerge.setStatusTip('Unmerge selected cells')
         unmerge.triggered.connect(self.unmergeCells)
-        center = QAction('center text',self)
-        center.setStatusTip('center selected cells')
-        center.setObjectName('center')
-        center.triggered.connect(self.centerCells)
-        center.setCheckable(True)
-        self.addActions((copy,cut,paste,merge,unmerge,center))
+        self.addActions((copy,cut,paste,merge,unmerge))
 
 
     def eventFilter(self,obj,event):
@@ -115,17 +110,6 @@ class MyView(QTableView):
                 return False
         else:
             return False
-
-    def centerCells(self):
-        '''Basic center text functionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        if not self.sender().isChecked():
-            for index in selectedIndexes:
-                self.model().setData(index,int(Qt.AlignLeft|Qt.AlignVCenter),role=Qt.TextAlignmentRole)
-        else:
-            for index in selectedIndexes:
-                self.model().setData(index,Qt.AlignCenter,role=Qt.TextAlignmentRole)
 
     def mergeCells(self):
         '''Basic merge cell funcionality'''
@@ -176,10 +160,44 @@ class MyView(QTableView):
                         action.setDisabled(True)
                 if self.model().domainHighlight:
                     self.model().domainHighlight.clear()
-                index = selectedIndexes[0]
+                    globals_.domainHighlight = False
+                index = self.currentIndex()
+                font = self.model().fonts.get((index.row(),index.column()),globals_.defaultFont)
+                size = font.pointSizeF()
+                if size.is_integer():
+                    size = int(size)
+                self.parent().pointSize.setCurrentText(str(size))
+                self.parent().fontsComboBox.setCurrentFont(font)
+                if font.bold():
+                    self.parent().boldAction.setChecked(True)
+                else:
+                    self.parent().boldAction.setChecked(False)
+                if font.italic():
+                    self.parent().italicAction.setChecked(True)
+                else:
+                    self.parent().italicAction.setChecked(False)
+                if font.underline():
+                    self.parent().underlineAction.setChecked(True)
+                else:
+                    self.parent().underlineAction.setChecked(False)
+                alignment = self.model().data(index,role=Qt.TextAlignmentRole)
+                hexAlignment = hex(alignment)
+                if hexAlignment[-1] == '1':
+                    self.parent().alignL.setChecked(True)
+                elif hexAlignment[-1] == '2':
+                    self.parent().alignR.setChecked(True)
+                else:
+                    self.parent().alignC.setChecked(True)
+                if hexAlignment[-2] == '2':
+                    self.parent().alignU.setChecked(True)
+                elif hexAlignment[-2] == '4':
+                    self.parent().alignD.setChecked(True)
+                else:
+                    self.parent().alignM.setChecked(True)
                 for f in self.model().formulas:
                     if f.addressRow == index.row() and f.addressColumn == index.column():
                         self.parent().commandLineEdit.setText('='+f.text)
+                        globals_.domainHighlight = True
                         for d in f.domain:
                             coloredIndex = self.model().index(d[0],d[1])
                             self.model().setData(coloredIndex,QColor(119,242,178),role=Qt.BackgroundRole)
