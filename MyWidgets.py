@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QMainWindow, QLineEdit, QToolBar, QLabel, QFileDi
                                QMessageBox, QFontComboBox, QComboBox, QColorDialog,
                                QPushButton)
 from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFontDatabase, QFont,
-                           QPixmap,QIcon,QBrush)
+                           QPixmap,QIcon,QBrush,QColor)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
 from MyView import MyView
@@ -186,7 +186,7 @@ class MainWindow(QMainWindow):
         toolBar = QToolBar('Command Toolbar')
         toolBar.setAllowedAreas(Qt.TopToolBarArea)
         toolBar.setMovable(False)
-        commandLabel = QLabel('Calculate :') 
+        commandLabel = QLabel('Evaluate :') 
         self.commandLineEdit.installEventFilter(self.view)
         toolBar.addWidget(commandLabel)
         toolBar.addWidget(self.commandLineEdit)
@@ -205,6 +205,8 @@ class MainWindow(QMainWindow):
         self.pointSize.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.pointSize.setCurrentIndex(6)
         self.pointSize.currentTextChanged.connect(self.updateFont)
+        self.fontsComboBox.activated.connect(self.saveFont2History)
+        self.pointSize.activated.connect(self.saveFont2History)
         formatToolbar.addWidget(self.fontsComboBox)
         formatToolbar.addWidget(self.pointSize)
         formatToolbar.addWidget(self.fontColor)
@@ -216,6 +218,8 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(self.styleSheet)
         globals_.currentFont = QFont(self.fontsComboBox.currentFont())
         globals_.defaultFont = QFont(globals_.currentFont)
+        globals_.defaultForeground = QBrush(Qt.black)
+        globals_.defaultBackground = QBrush(Qt.white)
         QTimer.singleShot(0,self.center)
  
     def center(self):
@@ -250,6 +254,10 @@ class MainWindow(QMainWindow):
                     self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
                     self.view.model().formulas.clear()
                     self.view.model().incons.clear()
+                    self.view.model().alignmentDict.clear()
+                    self.view.model().fonts.clear()
+                    self.view.model().foreground.clear()
+                    self.view.model().background.clear()
                     self.view.model().history.clear()
                     self.view.model().history.append((self.view.model().dataContainer.copy(),
                             self.view.model().formulas.copy()))
@@ -270,6 +278,13 @@ class MainWindow(QMainWindow):
         if MainWindow.currentFile:
             name = MainWindow.currentFile
             model = self.view.model().dataContainer
+            alignment = self.view.model().alignmentDict
+            fonts = self.view.model().fonts.copy()
+            foreground = self.view.model().foreground.copy()
+            background = self.view.model().background.copy()
+            self.encodeFonts(fonts)
+            self.encodeColors(foreground)
+            self.encodeColors(background)
             nonzeroes = np.nonzero(model['f0'])
             rows = nonzeroes[0]
             columns = nonzeroes[1]
@@ -279,6 +294,10 @@ class MainWindow(QMainWindow):
             with open(name,'wb') as myFile:
                 pickle.dump(finalModel, myFile)
                 pickle.dump(self.view.model().formulas, myFile)
+                pickle.dump(alignment, myFile)
+                pickle.dump(fonts, myFile)
+                pickle.dump(foreground, myFile)
+                pickle.dump(background, myFile)
             info = name+' was succesfully saved'
             self.statusBar().showMessage(info,5000)
         else:
@@ -289,6 +308,13 @@ class MainWindow(QMainWindow):
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','vnp files (*.vnp)')
         if name:
             model = self.view.model().dataContainer
+            alignment = self.view.model().alignmentDict
+            fonts = self.view.model().fonts.copy()
+            foreground = self.view.model().foreground.copy()
+            background = self.view.model().background.copy()
+            self.encodeFonts(fonts)
+            self.encodeColors(foreground)
+            self.encodeColors(background)
             nonzeroes = np.nonzero(model['f0'])
             rows = nonzeroes[0]
             columns = nonzeroes[1]
@@ -298,9 +324,43 @@ class MainWindow(QMainWindow):
             with open(name+'.vnp','wb') as myFile:
                 pickle.dump(finalModel,myFile)
                 pickle.dump(self.view.model().formulas,myFile)
+                pickle.dump(alignment, myFile)
+                pickle.dump(fonts, myFile)
+                pickle.dump(foreground, myFile)
+                pickle.dump(background, myFile)
             info = name+ ' was succesfully saved'
             self.statusBar().showMessage(info,5000)
             MainWindow.currentFile = name
+
+    def encodeFonts(self,fonts):
+        for i,f in fonts.items():
+            family = f.family()
+            size = f.pointSizeF()
+            if size.is_integer():
+                size = int(size)
+            bold = f.bold()
+            italic = f.italic()
+            underline = f.underline()
+            fonts[i] = [family,size,bold,italic,underline]
+
+    def encodeColors(self,brushes):
+        for i,b in brushes.items():
+            color = b.color().name()
+            brushes[i] = color
+
+    def decodeFonts(self,fonts):
+        for i,f in fonts.items():
+            font = QFont(f[0])
+            font.setPointSizeF(f[1])
+            font.setBold(f[2])
+            font.setItalic(f[3])
+            font.setUnderline(f[4])
+            fonts[i] = font
+
+    def decodeColors(self,colors):
+        for i,c in colors.items():
+            brush = QBrush(QColor(c))
+            colors[i] = brush
 
     def saveArrayAs(self):
         '''Saves array into .npy array format'''
@@ -334,8 +394,19 @@ class MainWindow(QMainWindow):
                 with open(name,'rb') as myFile:
                     loadedModel = pickle.load(myFile)
                     formulas = pickle.load(myFile)
+                    alignment = pickle.load(myFile)
+                    fonts = pickle.load(myFile)
+                    foreground = pickle.load(myFile)
+                    background = pickle.load(myFile)
+                    self.decodeFonts(fonts)
+                    self.decodeColors(foreground)
+                    self.decodeColors(background)
                     dataType = np.dtype('U32,D')
                     self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
+                    self.view.model().alignmentDict = alignment
+                    self.view.model().fonts = fonts
+                    self.view.model().foreground = foreground
+                    self.view.model().background = background
                     self.view.model().formulas.clear()
                     self.view.model().incons.clear()
                     self.view.model().history.clear()
@@ -393,6 +464,7 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(Qt.AlignLeft|vertical)
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
 
     def alignCenter(self):
@@ -412,6 +484,7 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(Qt.AlignHCenter|vertical) 
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def alignRight(self):
         selectionModel = self.view.selectionModel()
@@ -430,6 +503,7 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(Qt.AlignRight|vertical) 
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def alignUp(self):
         selectionModel = self.view.selectionModel()
@@ -448,6 +522,7 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignTop) 
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
         
 
     def alignMiddle(self):
@@ -467,6 +542,7 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignVCenter) 
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
         
 
     def alignDown(self):
@@ -486,6 +562,14 @@ class MainWindow(QMainWindow):
         for i in selected:
             model.alignmentDict[i.row(),i.column()] = int(horizontal|Qt.AlignBottom) 
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
+
+    def saveFont2History(self):
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        if not selected:
+            return
+        self.view.saveToHistory()
 
     def updateFont(self,varg=None):
         selectionModel = self.view.selectionModel()
@@ -519,6 +603,7 @@ class MainWindow(QMainWindow):
                 font.setBold(False)
             model.setData(index,font,role=Qt.FontRole)
         model.dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
     
     def italic(self):
         selectionModel = self.view.selectionModel()
@@ -534,6 +619,7 @@ class MainWindow(QMainWindow):
                 font.setItalic(False)
             model.setData(index,font,role=Qt.FontRole)
         model.dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def underline(self):
         selectionModel = self.view.selectionModel()
@@ -549,6 +635,7 @@ class MainWindow(QMainWindow):
                 font.setUnderline(False)
             model.setData(index,font,role=Qt.FontRole)
         model.dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def showColorDialog(self):
         selectionModel = self.view.selectionModel()
@@ -581,6 +668,7 @@ class MainWindow(QMainWindow):
             else:
                 model.setData(index,QBrush(color),role=Qt.BackgroundRole)
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def helpAbout(self):
         QMessageBox.about(self, "About Visual Numpy",

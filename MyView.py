@@ -418,7 +418,11 @@ class MyView(QTableView):
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
         data = self.model().dataContainer.copy()
-        self.model().history.append((data,self.model().formulas.copy()))
+        align = self.model().alignmentDict.copy()
+        fonts = self.model().fonts.copy()
+        foreground = self.model().foreground.copy()
+        background = self.model().background.copy()
+        self.model().history.append((data,self.model().formulas.copy(),align,fonts,foreground,background))
         globals_.historyIndex = -1
 
     def redo(self):
@@ -429,9 +433,17 @@ class MyView(QTableView):
         model = self.model().history[globals_.historyIndex]
         data = model[0]
         formulas = model[1]
+        alignments = model[2]
+        fonts = model[3]
+        foreground = model[4]
+        background = model[5]
         self.model().formulas.clear()
         self.model().formulas = formulas.copy()
         self.model().dataContainer = data.copy()
+        self.model().alignmentDict = alignments.copy()
+        self.model().fonts = fonts.copy()
+        self.model().foreground = foreground.copy()
+        self.model().background = background.copy()
         rows,columns = data.shape
         startIndex = self.model().index(0,0)
         endIndex = self.model().index(rows-1,columns-1)
@@ -445,9 +457,17 @@ class MyView(QTableView):
         model = self.model().history[globals_.historyIndex]
         data = model[0]
         formulas = model[1]
+        alignments = model[2]
+        fonts = model[3]
+        foreground = model[4]
+        background = model[5]
         self.model().formulas.clear()
         self.model().formulas = formulas.copy()
         self.model().dataContainer = data.copy()
+        self.model().alignmentDict = alignments.copy()
+        self.model().fonts = fonts.copy()
+        self.model().foreground = foreground.copy()
+        self.model().background = background.copy()
         rows,columns = data.shape
         startIndex = self.model().index(0,0)
         endIndex = self.model().index(rows-1,columns-1)
