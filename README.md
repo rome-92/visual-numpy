@@ -22,7 +22,7 @@ $ python visual_numpy.py
 
 ## Usage
 
-To start typing a formula from any cell press "=". You can navigate through the cells and the corresponding cell reference will show up on the calculate bar, you can also select a rectangular array of cells, this cells will behave like numpy arrays (actually any contiguous selection) when evaluating the expression.
+To start typing a formula from any cell press "=". You can navigate through the cells and the corresponding cell reference will show up on the calculate bar, you can also select a rectangular array of cells, this cells will behave like numpy arrays (actually any contiguous selection) when evaluating the expression.![Visual Numpy (develop)](https://i.ibb.co/9V5NdSk/vnpy01.png)
 
 As you will see usage of formulas and implementation differs from excel or any other "excel like" spreadsheet app on various ways, for instance to calculate a formula that references an array of cells only one formula is needed in contrast with excel in which a single formula is needed for every cell.
 
