@@ -38,7 +38,6 @@ class MyModel(QAbstractTableModel):
         self.formulaSnap = []
         self.highlight = None
         self.domainHighlight = {}
-        self.incons = {}
         self.alignmentDict = {}
         self.fonts = {}
         self.background = {}

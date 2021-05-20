@@ -238,10 +238,15 @@ class MainWindow(QMainWindow):
         dataType = np.dtype('U32,D')
         self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
         self.view.model().formulas.clear()
-        self.view.model().incons.clear()
+        self.view.model().alignmentDict.clear()
+        self.view.model().fonts.clear()
+        self.viewl.model().foreground.clear()
+        self.view.model().background.clear()
         self.view.model().history.clear()
         self.view.model().history.append((self.view.model().dataContainer.copy(),
-                self.view.model().formulas.copy()))
+                self.view.model().formulas.copy(),self.view.model().alignmentDict().copy(),
+                self.view.model().fonts.copy(),self.view.model().foreground.copy(),
+                self.view.model().background.copy()))
 
     def importFile(self):
         '''Imports csv files'''
@@ -253,14 +258,15 @@ class MainWindow(QMainWindow):
                     dataType = np.dtype('U32,D')
                     self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
                     self.view.model().formulas.clear()
-                    self.view.model().incons.clear()
                     self.view.model().alignmentDict.clear()
                     self.view.model().fonts.clear()
                     self.view.model().foreground.clear()
                     self.view.model().background.clear()
                     self.view.model().history.clear()
                     self.view.model().history.append((self.view.model().dataContainer.copy(),
-                            self.view.model().formulas.copy()))
+                            self.view.model().formulas.copy(),self.view.model().alignmentDict().copy(),
+                            self.view.model().fonts.copy(),self.view.model().foreground.copy(),
+                            self.view.model().background.copy()))
                     for rowNumber,row in enumerate(reader):
                         for columnNumber,column in enumerate(row):
                             index = self.view.model().createIndex(rowNumber,columnNumber)
@@ -408,7 +414,6 @@ class MainWindow(QMainWindow):
                     self.view.model().foreground = foreground
                     self.view.model().background = background
                     self.view.model().formulas.clear()
-                    self.view.model().incons.clear()
                     self.view.model().history.clear()
                     for rowNumber,row in enumerate(loadedModel):
                         for columnNumber,column in enumerate(row):
@@ -416,7 +421,9 @@ class MainWindow(QMainWindow):
                             self.view.model().setData(index,column)
                     self.view.model().formulas = formulas
                     self.view.model().history.append((self.view.model().dataContainer.copy(),
-                            self.view.model().formulas.copy()))
+                            self.view.model().formulas.copy(),self.view.model().alignmentDict().copy(),
+                            self.view.model().fonts.copy(),self.view.model().foreground.copy(),
+                            self.view.model().background.copy()))
                 MainWindow.currentFile = name
                 info = name+ ' was succesfully loaded'
                 self.statusBar().showMessage(info,5000)
