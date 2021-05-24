@@ -437,7 +437,6 @@ class MyView(QTableView):
         fonts = model[3]
         foreground = model[4]
         background = model[5]
-        self.model().formulas.clear()
         self.model().formulas = formulas.copy()
         self.model().dataContainer = data.copy()
         self.model().alignmentDict = alignments.copy()
@@ -461,7 +460,6 @@ class MyView(QTableView):
         fonts = model[3]
         foreground = model[4]
         background = model[5]
-        self.model().formulas.clear()
         self.model().formulas = formulas.copy()
         self.model().dataContainer = data.copy()
         self.model().alignmentDict = alignments.copy()

@@ -71,6 +71,7 @@ class MyModel(QAbstractTableModel):
             for f in self.formulas:
                 if f.addressRow == index.row() and f.addressColumn == index.column():
                     formulas.append(f)
+                    break
             rows.append(index.row())
             columns.append(index.column())
         clip = self.dataContainer[min(rows):max(rows)+1,min(columns):max(columns)+1]['f0']
@@ -149,7 +150,6 @@ class MyModel(QAbstractTableModel):
                                     print(e)
                                     modelFormula.addressRow = row
                                     modelFormula.addressColumn = column
-                                    return True
             selectionModel = self.parent().selectionModel()
             selectionModel.clear()
             for row_z in  range(newRow,newRow+dropArrayRows):

@@ -395,7 +395,6 @@ class MainWindow(QMainWindow):
         '''Loads .vnp format'''
         name,notUsed = QFileDialog.getOpenFileName(self,'Load File','','vnp files (*.vnp)')
         if name:
-            self.view.model().formulas = []
             try:
                 with open(name,'rb') as myFile:
                     loadedModel = pickle.load(myFile)
