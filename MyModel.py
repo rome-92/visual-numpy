@@ -43,7 +43,7 @@ class MyModel(QAbstractTableModel):
         self.background = {}
         self.foreground = {}
         self.history = []
-        self.history.append((self.dataContainer.copy(),self.formulas.copy(),self.alignmentDict,self.fonts,self.foreground,self.background))
+        self.history.append((self.dataContainer.copy(),self.formulas.copy(),self.alignmentDict.copy(),self.fonts.copy(),self.foreground.copy(),self.background.copy()))
         self.thousandsSep = True
 
     def enableThousandsSep(self):
