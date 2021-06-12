@@ -812,7 +812,7 @@ class MainWindow(QMainWindow):
                         return
                 for line,rY in zip(result,range(resultIndexRow,resultIndexRow+resultRows)):
                     for dE,cX in zip(line,range(resultIndexColumn,resultIndexColumn+resultColumns)):
-                        ind =self.view.model().createIndex(ry,cx)
+                        ind =self.view.model().createIndex(rY,cX)
                         self.view.model().setData(ind,globals_.currentFont,role=Qt.FontRole)
                         self.view.model().setData(ind,dE,formulaTriggered=True)
                 startIndex = self.view.model().index(resultIndexRow,resultIndexColumn)
