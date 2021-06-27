@@ -344,6 +344,7 @@ class MainWindow(QMainWindow):
             MainWindow.currentFile = name
 
     def encodeFonts(self,fonts):
+        '''Encodes font objects so they can be pickled'''
         for i,f in fonts.items():
             family = f.family()
             size = f.pointSizeF()
@@ -355,11 +356,13 @@ class MainWindow(QMainWindow):
             fonts[i] = [family,size,bold,italic,underline]
 
     def encodeColors(self,brushes):
+        '''Encodes colors so they can be pickled'''
         for i,b in brushes.items():
             color = b.color().name()
             brushes[i] = color
 
     def decodeFonts(self,fonts):
+        '''Decodes fonts so they can be used'''
         for i,f in fonts.items():
             font = QFont(f[0])
             font.setPointSizeF(f[1])
@@ -369,6 +372,7 @@ class MainWindow(QMainWindow):
             fonts[i] = font
 
     def decodeColors(self,colors):
+        '''Decodes colors so they can be used'''
         for i,c in colors.items():
             brush = QBrush(QColor(c))
             colors[i] = brush
@@ -459,6 +463,7 @@ class MainWindow(QMainWindow):
             self.view.model().disableThousandsSep()
 
     def alignLeft(self):
+        '''Left aligns text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -479,6 +484,7 @@ class MainWindow(QMainWindow):
 
 
     def alignCenter(self):
+        '''Centers text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -498,6 +504,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def alignRight(self):
+        '''Right aligns text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -517,6 +524,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def alignUp(self):
+        '''Top aligns text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -537,6 +545,7 @@ class MainWindow(QMainWindow):
         
 
     def alignMiddle(self):
+        '''Centers text vertically from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -557,6 +566,7 @@ class MainWindow(QMainWindow):
         
 
     def alignDown(self):
+        '''Bottom aligns text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -576,6 +586,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def saveFont2History(self):
+        '''Save font to model history'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -583,6 +594,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def updateFont(self,varg=None):
+        '''Updates fonts from selected text to current font'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -601,6 +613,7 @@ class MainWindow(QMainWindow):
         self.view.model().dataChanged.emit(selected[0],selected[-1])
 
     def bold(self):
+        '''Sets bold to True for text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -617,6 +630,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
     
     def italic(self):
+        '''Sets text to italic from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -633,6 +647,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def underline(self):
+        '''Underlines text from selected cells'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
@@ -649,6 +664,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def showColorDialog(self):
+        '''Shows color dialog for color selection'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         color = QColorDialog.getColor()
@@ -682,6 +698,7 @@ class MainWindow(QMainWindow):
         self.view.saveToHistory()
 
     def helpAbout(self):
+        '''Shows about dialog'''
         QMessageBox.about(self, "About Visual Numpy",
                 """<b>Visual Numpy</b> version {0}
                 <p>Copyright &copy; 2021 Román U. Martínez 
