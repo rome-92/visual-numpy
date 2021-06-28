@@ -231,7 +231,7 @@ class MyView(QTableView):
                     if text1:
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.startswith('='):
+                elif text0 == '=':
                     newText = text0 + model.getAlphanumeric(column,row)
                     finalText = newText + text1
                     commandLineEdit.clear()
@@ -280,7 +280,7 @@ class MyView(QTableView):
                     if text1:
                         cursorPosition  += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.startswith('='):
+                elif text0 == '=':
                     newText = text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
                     finalText = newText + text1
                     commandLineEdit.clear()
