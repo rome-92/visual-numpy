@@ -49,29 +49,6 @@ class MyView(QTableView):
         self.hScrollBar.sliderReleased.connect(self.enableAddColumn)
         self.horizontalHeader().sectionResized.connect(self.overlay.createRect)
         self.verticalHeader().sectionResized.connect(self.overlay.createRect)
-        copy = QAction('Copy', self)
-        copy.setShortcut('Ctrl+C')
-        copy.setStatusTip('Copy selected')
-        copy.triggered.connect(self.copyAction)
-        cut = QAction('Cut', self)
-        cut.setShortcut('Ctrl+X')
-        cut.setStatusTip('Cut selected')
-        cut.triggered.connect(self.cutAction)
-        paste = QAction('Paste', self)
-        paste.setShortcut('Ctrl+V')
-        paste.setStatusTip('Paste from local')
-        paste.triggered.connect(self.pasteAction)
-        paste.setDisabled(True)
-        merge = QAction('Merge cells',self)
-        merge.setObjectName('merge')
-        merge.setStatusTip('Merge selected cells')
-        merge.triggered.connect(self.mergeCells)
-        unmerge = QAction('Unmerge cells',self)
-        unmerge.setObjectName('unmerge')
-        unmerge.setStatusTip('Unmerge selected cells')
-        unmerge.triggered.connect(self.unmergeCells)
-        self.addActions((copy,cut,paste,merge,unmerge))
-
 
     def eventFilter(self,obj,event):
         '''Filters events from various objects intended to provide expected response'''
@@ -109,42 +86,7 @@ class MyView(QTableView):
             else:
                 return False
         else:
-            return False
-
-    def mergeCells(self):
-        '''Basic merge cell funcionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        rows = []
-        columns = []
-        for index in selectedIndexes:
-            rows.append(index.row())
-            columns.append(index.column())
-        topLeftIndex = self.model().index(min(rows),min(columns))
-        bottomRightIndex = self.model().index(max(rows),max(columns))
-        height = bottomRightIndex.row() - topLeftIndex.row() + 1
-        width = bottomRightIndex.column() - topLeftIndex.column() + 1
-        if height * width == len(selectedIndexes):
-            self.setSpan(topLeftIndex.row(),topLeftIndex.column(),height,width)
-
-    def unmergeCells(self):
-        '''Basic unmerge cell funcionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        if len(selectedIndexes) > 1:
-            rows = []
-            columns = []
-            for index in selectedIndexes:
-                rows.append(index.row())
-                columns.append(index.column())
-            topLeftIndex = self.model().index(min(rows),min(columns))
-            bottomRightIndex = self.model().index(max(rows),max(columns))
-            height = bottomRightIndex.row() - topLeftIndex.row() + 1
-            width = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if height * width == len(selectedIndexes):
-                self.setSpan(topLeftIndex.row(),topLeftIndex.column(),1,1)
-
-        
+            return False        
 
     def selectionChanged(self,selected,deselected):
         '''Handles proper response under corresponding state for selection changes'''
@@ -542,38 +484,6 @@ class MyView(QTableView):
             self.overlay.setGeometry(self.rect())
         except AssertionError:
             pass
-
-    def copyAction(self):
-        '''Basic copy action funcionality'''
-        self.pasteMode = Qt.CopyAction
-        selectionModel = self.selectionModel()
-        selected = selectionModel.selectedIndexes()
-        self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
-        for action in self.actions():
-            if action.iconText() == 'Paste':
-                action.setDisabled(False)
-
-    def cutAction(self):
-        '''Basic cut action funcionality'''
-        self.pasteMode = Qt.MoveAction
-        selectionModel = self.selectionModel()
-        selected = selectionModel.selectedIndexes()
-        self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
-        for action in self.actions():
-            if action.iconText() == 'Paste':
-                action.setDisabled(False)
-
-    def pasteAction(self):
-        '''Basic paste action functionality'''
-        try:
-            assert self.mimeDataToPaste
-        except AssertionError:
-            return
-        parent = self.currentIndex()
-        self.model().dropMimeData(self.mimeDataToPaste,self.pasteMode,-1,-1,parent)
-        if self.pasteMode == Qt.MoveAction:
-            self.mimeDataToPaste = None
-
 
 class Overlay(QWidget):
     '''Provides visual aesthetic for selections and drag functionality'''

@@ -83,11 +83,6 @@ class MainWindow(QMainWindow):
         saveFileAs.setShortcut('Shift+Ctrl+S')
         saveFileAs.setStatusTip('Save File As')
         saveFileAs.triggered.connect(self.saveFileAs)
-        saveArrayAs = QAction('Save A&rray',self)
-        saveArrayAs.setShortcut('Ctrl+J')
-        saveArrayAs.setStatusTip('Save Array in .npy format')
-        saveArrayAs.triggered.connect(self.saveArrayAs)
-        self.view.addAction(saveArrayAs)
         loadFile = QAction('&Open',self)
         loadFile.setShortcut('Ctrl+O')
         loadFile.setStatusTip('Load .vnp file')
@@ -152,6 +147,33 @@ class MainWindow(QMainWindow):
         self.underlineAction.setIcon(QPixmap(':underline.png'))
         self.underlineAction.setCheckable(True)
         self.underlineAction.triggered.connect(self.underline)
+#View context menu actions 
+        copy = QAction('Copy', self)
+        copy.setShortcut('Ctrl+C')
+        copy.setStatusTip('Copy selected')
+        copy.triggered.connect(self.copyAction)
+        cut = QAction('Cut', self)
+        cut.setShortcut('Ctrl+X')
+        cut.setStatusTip('Cut selected')
+        cut.triggered.connect(self.cutAction)
+        paste = QAction('Paste', self)
+        paste.setShortcut('Ctrl+V')
+        paste.setStatusTip('Paste from local')
+        paste.triggered.connect(self.pasteAction)
+        paste.setDisabled(True)
+        merge = QAction('Merge cells',self)
+        merge.setObjectName('merge')
+        merge.setStatusTip('Merge selected cells')
+        merge.triggered.connect(self.mergeCells)
+        unmerge = QAction('Unmerge cells',self)
+        unmerge.setObjectName('unmerge')
+        unmerge.setStatusTip('Unmerge selected cells')
+        unmerge.triggered.connect(self.unmergeCells)
+        saveArrayAs = QAction('Save A&rray',self)
+        saveArrayAs.setShortcut('Ctrl+J')
+        saveArrayAs.setStatusTip('Save Array in .npy format')
+        saveArrayAs.triggered.connect(self.saveArrayAs)
+        self.view.addActions((copy,cut,paste,merge,unmerge,saveArrayAs))
 # Create action group
         self.alignmentGroup1 = QActionGroup(self)
         self.alignmentGroup1.addAction(self.alignL)
@@ -176,8 +198,6 @@ class MainWindow(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(exportFile)
         fileMenu.addAction(importFile)
-        fileMenu.addSeparator()
-        fileMenu.addAction(saveArrayAs)
         formatMenu = mainMenu.addMenu('For&mat')
         formatMenu.addAction(thsndsSep)
         helpMenu = self.menuBar().addMenu('&Help')
@@ -376,6 +396,70 @@ class MainWindow(QMainWindow):
         for i,c in colors.items():
             brush = QBrush(QColor(c))
             colors[i] = brush
+
+    def copyAction(self):
+        '''Basic copy action funcionality'''
+        self.pasteMode = Qt.CopyAction
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        self.mimeDataToPaste = self.view.model().mimeData(selected,flag='keepTopIndex')
+        for action in self.view.actions():
+            if action.iconText() == 'Paste':
+                action.setDisabled(False)
+
+    def cutAction(self):
+        '''Basic cut action funcionality'''
+        self.pasteMode = Qt.MoveAction
+        selectionModel = self.view.selectionModel()
+        selected = selectionModel.selectedIndexes()
+        self.mimeDataToPaste = self.view.model().mimeData(selected,flag='keepTopIndex')
+        for action in self.actions():
+            if action.iconText() == 'Paste':
+                action.setDisabled(False)
+
+    def pasteAction(self):
+        '''Basic paste action functionality'''
+        try:
+            assert self.mimeDataToPaste
+        except AssertionError:
+            return
+        parent = self.view.currentIndex()
+        self.view.model().dropMimeData(self.mimeDataToPaste,self.pasteMode,-1,-1,parent)
+        if self.pasteMode == Qt.MoveAction:
+            self.mimeDataToPaste = None
+
+    def mergeCells(self):
+        '''Basic merge cell funcionality'''
+        selectionModel = self.view.selectionModel()
+        selectedIndexes = selectionModel.selectedIndexes()
+        rows = []
+        columns = []
+        for index in selectedIndexes:
+            rows.append(index.row())
+            columns.append(index.column())
+        topLeftIndex = self.view.model().index(min(rows),min(columns))
+        bottomRightIndex = self.view.model().index(max(rows),max(columns))
+        height = bottomRightIndex.row() - topLeftIndex.row() + 1
+        width = bottomRightIndex.column() - topLeftIndex.column() + 1
+        if height * width == len(selectedIndexes):
+            self.view.setSpan(topLeftIndex.row(),topLeftIndex.column(),height,width)
+
+    def unmergeCells(self):
+        '''Basic unmerge cell funcionality'''
+        selectionModel = self.view.selectionModel()
+        selectedIndexes = selectionModel.selectedIndexes()
+        if len(selectedIndexes) > 1:
+            rows = []
+            columns = []
+            for index in selectedIndexes:
+                rows.append(index.row())
+                columns.append(index.column())
+            topLeftIndex = self.view.model().index(min(rows),min(columns))
+            bottomRightIndex = self.view.model().index(max(rows),max(columns))
+            height = bottomRightIndex.row() - topLeftIndex.row() + 1
+            width = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if height * width == len(selectedIndexes):
+                self.view.setSpan(topLeftIndex.row(),topLeftIndex.column(),1,1)
 
     def saveArrayAs(self):
         '''Saves array into .npy array format'''
