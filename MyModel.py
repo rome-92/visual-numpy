@@ -126,13 +126,7 @@ class MyModel(QAbstractTableModel):
             dropArrayRows = dropArrayShape[0]
             dropArrayColumns = dropArrayShape[1]
             self.formulaSnap = self.formulas.copy()
-            if action == Qt.MoveAction:
-                for row in range(topLeftRow,topLeftRow+dropArrayRows):
-                    for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
-                        self.setData(self.index(row,column),'',formulaTriggered=True)
-            for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
-                for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
-                    self.setData(self.index(y,x),column,formulaTriggered='ERASE')
+            formulasAddresses = set()
             if action == Qt.MoveAction:
                 if len(data) > 5:
                     formulas2move = data[5:]
@@ -146,11 +140,21 @@ class MyModel(QAbstractTableModel):
                                     modelFormula.addressRow = row + newRowDifference
                                     modelFormula.addressColumn = column + newColumnDifference
                                     self.checkForCircularRef(modelFormula,newRowDifference,newColumnDifference)
+                                    formulasAddresses.add((modelFormula.addressRow,modelFormula.addressColumn))
                                 except Exception as e:
                                     traceback.print_tb(e.__traceback__)
                                     print(e)
                                     modelFormula.addressRow = row
                                     modelFormula.addressColumn = column
+                for row in range(topLeftRow,topLeftRow+dropArrayRows):
+                    for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
+                        self.setData(self.index(row,column),'',formulaTriggered=True)
+            for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
+                for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
+                    if (y,x) in formulasAddresses:
+                        self.setData(self.index(y,x),column,formulaTriggered=True)
+                    else:
+                        self.setData(self.index(y,x),column,formulaTriggered='ERASE')
             selectionModel = self.parent().selectionModel()
             selectionModel.clear()
             for row_z in  range(newRow,newRow+dropArrayRows):
