@@ -43,8 +43,8 @@ class MyModel(QAbstractTableModel):
         self.background = {}
         self.foreground = {}
         self.history = []
-        self.history.append((self.dataContainer.copy(),self.formulas.copy(),self.alignmentDict.copy(),
-            self.fonts.copy(),self.foreground.copy(),self.background.copy()))
+        self.history.append((self.dataContainer,self.formulas,self.alignmentDict,
+            self.fonts,self.foreground,self.background))
         self.thousandsSep = True
 
     def enableThousandsSep(self):
@@ -162,6 +162,7 @@ class MyModel(QAbstractTableModel):
                     selectionModel.select(self.index(row_z,column_z),QItemSelectionModel.Select)
             if self.ftoapply:
                 self.updateModel_()
+            self.parent().saveToHistory()
             return True
 
     def checkForCircularRef(self,formula,*deltas):

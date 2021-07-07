@@ -306,7 +306,6 @@ class MyView(QTableView):
             if globals_.historyIndex != -1:
                 hIndex = globals_.historyIndex + len(self.model().history) + 1
                 self.model().history = self.model().history[:hIndex]
-            self.saveToHistory()
             globals_.drag = False
 
     def dropEvent(self, event):
@@ -360,11 +359,12 @@ class MyView(QTableView):
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
         data = self.model().dataContainer.copy()
+        formulas = self.model().formulas.copy()
         align = self.model().alignmentDict.copy()
         fonts = self.model().fonts.copy()
         foreground = self.model().foreground.copy()
         background = self.model().background.copy()
-        self.model().history.append((data,self.model().formulas.copy(),align,fonts,foreground,background))
+        self.model().history.append((data,formulas,align,fonts,foreground,background))
         globals_.historyIndex = -1
 
     def redo(self):
