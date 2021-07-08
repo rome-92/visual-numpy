@@ -23,6 +23,7 @@ from PySide6.QtWidgets import QTableView, QAbstractItemView, QApplication, QWidg
 from PySide6.QtGui import QAction, QColor, QPainter, QPen, QBrush
 from MyModel import CircularReferenceError
 import globals_
+import copy
 
 
 class MyView(QTableView):
@@ -359,7 +360,7 @@ class MyView(QTableView):
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
         data = self.model().dataContainer.copy()
-        formulas = self.model().formulas.copy()
+        formulas = copy.deepcopy(self.model().formulas)
         align = self.model().alignmentDict.copy()
         fonts = self.model().fonts.copy()
         foreground = self.model().foreground.copy()

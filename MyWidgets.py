@@ -217,16 +217,14 @@ class MainWindow(QMainWindow):
         formatToolbar.setAllowedAreas(Qt.TopToolBarArea)
         formatToolbar.setMovable(False)
         self.fontsComboBox = QFontComboBox()
-        self.fontsComboBox.currentFontChanged.connect(self.updateFont)
         self.pointSize = QComboBox()
         self.pointSize.addItems(globals_.POINT_SIZES)
         self.pointSize.setMaxVisibleItems(10)
         self.pointSize.setStyleSheet('''QComboBox {combobox-popup: 0;}''')
         self.pointSize.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.pointSize.setCurrentIndex(6)
-        self.pointSize.currentTextChanged.connect(self.updateFont)
-        self.fontsComboBox.activated.connect(self.saveFont2History)
-        self.pointSize.activated.connect(self.saveFont2History)
+        self.fontsComboBox.activated.connect(self.updateFont)
+        self.pointSize.activated.connect(self.updateFont)
         formatToolbar.addWidget(self.fontsComboBox)
         formatToolbar.addWidget(self.pointSize)
         formatToolbar.addWidget(self.fontColor)
@@ -669,32 +667,25 @@ class MainWindow(QMainWindow):
         self.view.model().dataChanged.emit(selected[0],selected[-1])
         self.view.saveToHistory()
 
-    def saveFont2History(self):
-        '''Save font to model history'''
-        selectionModel = self.view.selectionModel()
-        selected = selectionModel.selectedIndexes()
-        if not selected:
-            return
-        self.view.saveToHistory()
-
-    def updateFont(self,varg=None):
+    def updateFont(self):
         '''Updates fonts from selected text to current font'''
         selectionModel = self.view.selectionModel()
         selected = selectionModel.selectedIndexes()
         if not selected:
             return
-        if type(varg) == QFont:
-            globals_.currentFont = QFont(varg)
+        if self.sender().metaObject().className() == 'QFontComboBox':
+            globals_.currentFont = QFont(self.fontsComboBox.currentFont())
             pointSize = float(self.pointSize.currentText())
             globals_.currentFont.setPointSizeF(pointSize)
-        elif type(varg) == str:
+        else:
             font = self.fontsComboBox.currentFont()
             globals_.currentFont = QFont(font)
-            pointSize = float(varg)
+            pointSize = float(self.pointSize.currentText())
             globals_.currentFont.setPointSizeF(pointSize)
         for index in selected:
             self.view.model().setData(index,globals_.currentFont,role=Qt.FontRole)
         self.view.model().dataChanged.emit(selected[0],selected[-1])
+        self.view.saveToHistory()
 
     def bold(self):
         '''Sets bold to True for text from selected cells'''
@@ -777,6 +768,8 @@ class MainWindow(QMainWindow):
             if self.sender().objectName() == 'FontColor':
                 model.setData(index,QBrush(color),role=Qt.ForegroundRole)
             else:
+                if globals_.domainHighlight:
+                    globals_.domainHighlight = False
                 model.setData(index,QBrush(color),role=Qt.BackgroundRole)
         self.view.model().dataChanged.emit(selected[0],selected[-1])
         self.view.saveToHistory()
