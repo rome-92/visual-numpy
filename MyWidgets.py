@@ -36,7 +36,7 @@ import numbers
 import traceback,random,csv,pickle
 import numpy as np
 
-version = '1.0.0-a.2'
+version = '1.0.0'
 
 class MainWindow(QMainWindow):
     
@@ -267,7 +267,7 @@ class MainWindow(QMainWindow):
         self.view.model().background.clear()
         self.view.model().history.clear()
         self.view.model().history.append((self.view.model().dataContainer.copy(),
-                self.view.model().formulas.copy(),self.view.model().alignmentDict.copy(),
+                copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                 self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                 self.view.model().background.copy()))
 
@@ -287,7 +287,7 @@ class MainWindow(QMainWindow):
                     self.view.model().background.clear()
                     self.view.model().history.clear()
                     self.view.model().history.append((self.view.model().dataContainer.copy(),
-                            self.view.model().formulas.copy(),self.view.model().alignmentDict.copy(),
+                            copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
                     for rowNumber,row in enumerate(reader):
@@ -511,7 +511,7 @@ class MainWindow(QMainWindow):
                             self.view.model().setData(index,column)
                     self.view.model().formulas = formulas
                     self.view.model().history.append((self.view.model().dataContainer.copy(),
-                            self.view.model().formulas.copy(),self.view.model().alignmentDict.copy(),
+                            copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
                 MainWindow.currentFile = name
