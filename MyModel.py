@@ -149,17 +149,15 @@ class MyModel(QAbstractTableModel):
                 for row in range(topLeftRow,topLeftRow+dropArrayRows):
                     for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
                         self.setData(self.index(row,column),'',formulaTriggered=True)
+            selectionModel = self.parent().selectionModel()
+            selectionModel.clear()
             for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
                 for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
                     if (y,x) in formulasAddresses:
                         self.setData(self.index(y,x),column,formulaTriggered=True)
                     else:
                         self.setData(self.index(y,x),column,formulaTriggered='ERASE')
-            selectionModel = self.parent().selectionModel()
-            selectionModel.clear()
-            for row_z in  range(newRow,newRow+dropArrayRows):
-                for column_z in range(newColumn,newColumn+dropArrayColumns):
-                    selectionModel.select(self.index(row_z,column_z),QItemSelectionModel.Select)
+                    selectionModel.select(self.index(y,x),QItemSelectionModel.Select)
             if self.ftoapply:
                 self.updateModel_()
             self.parent().saveToHistory()
