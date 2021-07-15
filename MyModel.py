@@ -23,6 +23,7 @@ from PySide6.QtCore import (QAbstractTableModel, QMimeData, QByteArray, QDataStr
 import globals_
 import traceback
 import numpy as np
+import copy
 
 
 class MyModel(QAbstractTableModel):
@@ -43,8 +44,8 @@ class MyModel(QAbstractTableModel):
         self.background = {}
         self.foreground = {}
         self.history = []
-        self.history.append((self.dataContainer,self.formulas,self.alignmentDict,
-            self.fonts,self.foreground,self.background))
+        self.history.append((self.dataContainer.copy(),copy.deepcopy(self.formulas),self.alignmentDict.copy(),
+            self.fonts.copy(),self.foreground.copy(),self.background.copy()))
         self.thousandsSep = True
 
     def enableThousandsSep(self):
