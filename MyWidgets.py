@@ -673,15 +673,10 @@ class MainWindow(QMainWindow):
         selected = selectionModel.selectedIndexes()
         if not selected:
             return
-        if self.sender().metaObject().className() == 'QFontComboBox':
-            globals_.currentFont = QFont(self.fontsComboBox.currentFont())
-            pointSize = float(self.pointSize.currentText())
-            globals_.currentFont.setPointSizeF(pointSize)
-        else:
-            font = self.fontsComboBox.currentFont()
-            globals_.currentFont = QFont(font)
-            pointSize = float(self.pointSize.currentText())
-            globals_.currentFont.setPointSizeF(pointSize)
+        font = self.fontsComboBox.currentFont()
+        globals_.currentFont = QFont(font)
+        pointSize = float(self.pointSize.currentText())
+        globals_.currentFont.setPointSizeF(pointSize)
         for index in selected:
             self.view.model().setData(index,globals_.currentFont,role=Qt.FontRole)
         self.view.model().dataChanged.emit(selected[0],selected[-1])
