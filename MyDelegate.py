@@ -39,12 +39,16 @@ class MyDelegate(QStyledItemDelegate):
             self.parent().model().history = self.parent().model().history[:hIndex]
         if editor.text() == model.data(index):
             return
+        font = model.fonts.get((index.row(),index.column()),globals_.defaultFont)
+        textColor = model.foreground.get((index.row(),index.column()),globals_.defaultForeground)
+        backColor = model.background.get((index.row(),index.column()),globals_.defaultBackground)
+        model.setData(index,font,role=Qt.FontRole)
         model.setData(index,editor.text())
+        model.setData(index,textColor,role=Qt.ForegroundRole)
+        model.setData(index,backColor,role=Qt.BackgroundRole)
         for f in model.formulas:
             if (index.row(),index.column()) in f.domain:
-                globals_.formulaIncon = True
                 model.setData(index,QColor(255,69,69),role=Qt.BackgroundRole)
-                globals_.formulaIncon= False
                 break
         self.parent().saveToHistory()
 

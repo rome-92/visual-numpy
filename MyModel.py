@@ -23,6 +23,7 @@ from PySide6.QtCore import (QAbstractTableModel, QMimeData, QByteArray, QDataStr
 import globals_
 import traceback
 import numpy as np
+import copy
 
 
 class MyModel(QAbstractTableModel):
@@ -38,10 +39,13 @@ class MyModel(QAbstractTableModel):
         self.formulaSnap = []
         self.highlight = None
         self.domainHighlight = {}
-        self.incons = {}
         self.alignmentDict = {}
+        self.fonts = {}
+        self.background = {}
+        self.foreground = {}
         self.history = []
-        self.history.append((self.dataContainer.copy(),self.formulas.copy()))
+        self.history.append((self.dataContainer.copy(),copy.deepcopy(self.formulas),self.alignmentDict.copy(),
+            self.fonts.copy(),self.foreground.copy(),self.background.copy()))
         self.thousandsSep = True
 
     def enableThousandsSep(self):
@@ -69,6 +73,7 @@ class MyModel(QAbstractTableModel):
             for f in self.formulas:
                 if f.addressRow == index.row() and f.addressColumn == index.column():
                     formulas.append(f)
+                    break
             rows.append(index.row())
             columns.append(index.column())
         clip = self.dataContainer[min(rows):max(rows)+1,min(columns):max(columns)+1]['f0']
@@ -122,13 +127,7 @@ class MyModel(QAbstractTableModel):
             dropArrayRows = dropArrayShape[0]
             dropArrayColumns = dropArrayShape[1]
             self.formulaSnap = self.formulas.copy()
-            if action == Qt.MoveAction:
-                for row in range(topLeftRow,topLeftRow+dropArrayRows):
-                    for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
-                        self.setData(self.index(row,column),'',formulaTriggered=True)
-            for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
-                for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
-                    self.setData(self.index(y,x),column,formulaTriggered='ERASE')
+            formulasAddresses = set()
             if action == Qt.MoveAction:
                 if len(data) > 5:
                     formulas2move = data[5:]
@@ -142,19 +141,27 @@ class MyModel(QAbstractTableModel):
                                     modelFormula.addressRow = row + newRowDifference
                                     modelFormula.addressColumn = column + newColumnDifference
                                     self.checkForCircularRef(modelFormula,newRowDifference,newColumnDifference)
+                                    formulasAddresses.add((modelFormula.addressRow,modelFormula.addressColumn))
                                 except Exception as e:
                                     traceback.print_tb(e.__traceback__)
                                     print(e)
                                     modelFormula.addressRow = row
                                     modelFormula.addressColumn = column
-                                    return True
+                for row in range(topLeftRow,topLeftRow+dropArrayRows):
+                    for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
+                        self.setData(self.index(row,column),'',formulaTriggered=True)
             selectionModel = self.parent().selectionModel()
             selectionModel.clear()
-            for row_z in  range(newRow,newRow+dropArrayRows):
-                for column_z in range(newColumn,newColumn+dropArrayColumns):
-                    selectionModel.select(self.index(row_z,column_z),QItemSelectionModel.Select)
+            for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
+                for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
+                    if (y,x) in formulasAddresses:
+                        self.setData(self.index(y,x),column,formulaTriggered=True)
+                    else:
+                        self.setData(self.index(y,x),column,formulaTriggered='ERASE')
+                    selectionModel.select(self.index(y,x),QItemSelectionModel.Select)
             if self.ftoapply:
                 self.updateModel_()
+            self.parent().saveToHistory()
             return True
 
     def checkForCircularRef(self,formula,*deltas):
@@ -261,11 +268,14 @@ class MyModel(QAbstractTableModel):
             elif self.domainHighlight:
                 if (index.row(),index.column()) in self.domainHighlight:
                     return self.domainHighlight[index.row(),index.column()]
-            elif self.incons:
-                if (index.row(),index.column()) in self.incons:
-                    return self.incons[index.row(),index.column()]
+            else:
+                return self.background.get((index.row(),index.column()),globals_.defaultBackground)
+        if role == Qt.FontRole:
+            return self.fonts.get((index.row(),index.column()),globals_.defaultFont)
         if role == Qt.TextAlignmentRole:
             return self.alignmentDict.get((index.row(),index.column()),int(Qt.AlignLeft|Qt.AlignVCenter))
+        if role == Qt.ForegroundRole:
+            return self.foreground.get((index.row(),index.column()),globals_.defaultForeground)
 
     def setData(self,index,value,role=Qt.EditRole,formulaTriggered=False):
         '''Sets the appropiate data for the corresponding role'''
@@ -296,9 +306,6 @@ class MyModel(QAbstractTableModel):
             if formulaTriggered == 'ERASE':
                 for f in self.formulas:
                     if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        for cRow,cColumn in f.domain:
-                            if (cRow,cColumn) in self.incons:
-                                del self.incons[cRow,cColumn]
                         self.formulas.remove(f)
                         break
                 for f in self.formulaSnap.copy():
@@ -317,9 +324,6 @@ class MyModel(QAbstractTableModel):
             elif formulaTriggered == False:
                 for f in self.formulas:
                     if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        for cRow,cColumn in f.domain:
-                            if (cRow,cColumn) in self.incons:
-                                del self.incons[cRow,cColumn]
                         self.formulas.remove(f)
                         break
                 for f in self.formulas:
@@ -333,14 +337,21 @@ class MyModel(QAbstractTableModel):
             if globals_.formula_mode:
                 self.highlight = ((index.row(),index.column()),value)
                 return True
-            elif globals_.formulaIncon:
-                self.incons[index.row(),index.column()] = value
+            elif globals_.domainHighlight:
+                self.domainHighlight[index.row(),index.column()]=value
                 return True
             else:
-                self.domainHighlight[index.row(),index.column()]=value
+                self.background[index.row(),index.column()] = value
                 return True
         elif role == Qt.TextAlignmentRole:
             self.alignmentDict[index.row(),index.column()] = value
+            return True
+        elif role == Qt.FontRole:
+            self.fonts[index.row(),index.column()] = value
+            return True
+        elif role == Qt.ForegroundRole:
+            self.foreground[index.row(),index.column()] = value
+            return True
     
     def flags(self,index):
         if index.isValid():

@@ -23,6 +23,7 @@ from PySide6.QtWidgets import QTableView, QAbstractItemView, QApplication, QWidg
 from PySide6.QtGui import QAction, QColor, QPainter, QPen, QBrush
 from MyModel import CircularReferenceError
 import globals_
+import copy
 
 
 class MyView(QTableView):
@@ -49,34 +50,6 @@ class MyView(QTableView):
         self.hScrollBar.sliderReleased.connect(self.enableAddColumn)
         self.horizontalHeader().sectionResized.connect(self.overlay.createRect)
         self.verticalHeader().sectionResized.connect(self.overlay.createRect)
-        copy = QAction('Copy', self)
-        copy.setShortcut('Ctrl+C')
-        copy.setStatusTip('Copy selected')
-        copy.triggered.connect(self.copyAction)
-        cut = QAction('Cut', self)
-        cut.setShortcut('Ctrl+X')
-        cut.setStatusTip('Cut selected')
-        cut.triggered.connect(self.cutAction)
-        paste = QAction('Paste', self)
-        paste.setShortcut('Ctrl+V')
-        paste.setStatusTip('Paste from local')
-        paste.triggered.connect(self.pasteAction)
-        paste.setDisabled(True)
-        merge = QAction('Merge cells',self)
-        merge.setObjectName('merge')
-        merge.setStatusTip('Merge selected cells')
-        merge.triggered.connect(self.mergeCells)
-        unmerge = QAction('Unmerge cells',self)
-        unmerge.setObjectName('unmerge')
-        unmerge.setStatusTip('Unmerge selected cells')
-        unmerge.triggered.connect(self.unmergeCells)
-        center = QAction('center text',self)
-        center.setStatusTip('center selected cells')
-        center.setObjectName('center')
-        center.triggered.connect(self.centerCells)
-        center.setCheckable(True)
-        self.addActions((copy,cut,paste,merge,unmerge,center))
-
 
     def eventFilter(self,obj,event):
         '''Filters events from various objects intended to provide expected response'''
@@ -114,53 +87,7 @@ class MyView(QTableView):
             else:
                 return False
         else:
-            return False
-
-    def centerCells(self):
-        '''Basic center text functionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        if not self.sender().isChecked():
-            for index in selectedIndexes:
-                self.model().setData(index,int(Qt.AlignLeft|Qt.AlignVCenter),role=Qt.TextAlignmentRole)
-        else:
-            for index in selectedIndexes:
-                self.model().setData(index,Qt.AlignCenter,role=Qt.TextAlignmentRole)
-
-    def mergeCells(self):
-        '''Basic merge cell funcionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        rows = []
-        columns = []
-        for index in selectedIndexes:
-            rows.append(index.row())
-            columns.append(index.column())
-        topLeftIndex = self.model().index(min(rows),min(columns))
-        bottomRightIndex = self.model().index(max(rows),max(columns))
-        height = bottomRightIndex.row() - topLeftIndex.row() + 1
-        width = bottomRightIndex.column() - topLeftIndex.column() + 1
-        if height * width == len(selectedIndexes):
-            self.setSpan(topLeftIndex.row(),topLeftIndex.column(),height,width)
-
-    def unmergeCells(self):
-        '''Basic unmerge cell funcionality'''
-        selectionModel = self.selectionModel()
-        selectedIndexes = selectionModel.selectedIndexes()
-        if len(selectedIndexes) > 1:
-            rows = []
-            columns = []
-            for index in selectedIndexes:
-                rows.append(index.row())
-                columns.append(index.column())
-            topLeftIndex = self.model().index(min(rows),min(columns))
-            bottomRightIndex = self.model().index(max(rows),max(columns))
-            height = bottomRightIndex.row() - topLeftIndex.row() + 1
-            width = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if height * width == len(selectedIndexes):
-                self.setSpan(topLeftIndex.row(),topLeftIndex.column(),1,1)
-
-        
+            return False        
 
     def selectionChanged(self,selected,deselected):
         '''Handles proper response under corresponding state for selection changes'''
@@ -176,10 +103,44 @@ class MyView(QTableView):
                         action.setDisabled(True)
                 if self.model().domainHighlight:
                     self.model().domainHighlight.clear()
-                index = selectedIndexes[0]
+                    globals_.domainHighlight = False
+                index = self.currentIndex()
+                font = self.model().fonts.get((index.row(),index.column()),globals_.defaultFont)
+                size = font.pointSizeF()
+                if size.is_integer():
+                    size = int(size)
+                self.parent().pointSize.setCurrentText(str(size))
+                self.parent().fontsComboBox.setCurrentFont(font)
+                if font.bold():
+                    self.parent().boldAction.setChecked(True)
+                else:
+                    self.parent().boldAction.setChecked(False)
+                if font.italic():
+                    self.parent().italicAction.setChecked(True)
+                else:
+                    self.parent().italicAction.setChecked(False)
+                if font.underline():
+                    self.parent().underlineAction.setChecked(True)
+                else:
+                    self.parent().underlineAction.setChecked(False)
+                alignment = self.model().data(index,role=Qt.TextAlignmentRole)
+                hexAlignment = hex(alignment)
+                if hexAlignment[-1] == '1':
+                    self.parent().alignL.setChecked(True)
+                elif hexAlignment[-1] == '2':
+                    self.parent().alignR.setChecked(True)
+                else:
+                    self.parent().alignC.setChecked(True)
+                if hexAlignment[-2] == '2':
+                    self.parent().alignU.setChecked(True)
+                elif hexAlignment[-2] == '4':
+                    self.parent().alignD.setChecked(True)
+                else:
+                    self.parent().alignM.setChecked(True)
                 for f in self.model().formulas:
                     if f.addressRow == index.row() and f.addressColumn == index.column():
                         self.parent().commandLineEdit.setText('='+f.text)
+                        globals_.domainHighlight = True
                         for d in f.domain:
                             coloredIndex = self.model().index(d[0],d[1])
                             self.model().setData(coloredIndex,QColor(119,242,178),role=Qt.BackgroundRole)
@@ -213,7 +174,7 @@ class MyView(QTableView):
                     if text1:
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.startswith('='):
+                elif text0 == '=':
                     newText = text0 + model.getAlphanumeric(column,row)
                     finalText = newText + text1
                     commandLineEdit.clear()
@@ -262,7 +223,7 @@ class MyView(QTableView):
                     if text1:
                         cursorPosition  += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.startswith('='):
+                elif text0 == '=':
                     newText = text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
                     finalText = newText + text1
                     commandLineEdit.clear()
@@ -346,7 +307,6 @@ class MyView(QTableView):
             if globals_.historyIndex != -1:
                 hIndex = globals_.historyIndex + len(self.model().history) + 1
                 self.model().history = self.model().history[:hIndex]
-            self.saveToHistory()
             globals_.drag = False
 
     def dropEvent(self, event):
@@ -400,7 +360,12 @@ class MyView(QTableView):
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
         data = self.model().dataContainer.copy()
-        self.model().history.append((data,self.model().formulas.copy()))
+        formulas = copy.deepcopy(self.model().formulas)
+        align = self.model().alignmentDict.copy()
+        fonts = self.model().fonts.copy()
+        foreground = self.model().foreground.copy()
+        background = self.model().background.copy()
+        self.model().history.append((data,formulas,align,fonts,foreground,background))
         globals_.historyIndex = -1
 
     def redo(self):
@@ -411,9 +376,16 @@ class MyView(QTableView):
         model = self.model().history[globals_.historyIndex]
         data = model[0]
         formulas = model[1]
-        self.model().formulas.clear()
-        self.model().formulas = formulas.copy()
+        alignments = model[2]
+        fonts = model[3]
+        foreground = model[4]
+        background = model[5]
+        self.model().formulas = copy.deepcopy(formulas)
         self.model().dataContainer = data.copy()
+        self.model().alignmentDict = alignments.copy()
+        self.model().fonts = fonts.copy()
+        self.model().foreground = foreground.copy()
+        self.model().background = background.copy()
         rows,columns = data.shape
         startIndex = self.model().index(0,0)
         endIndex = self.model().index(rows-1,columns-1)
@@ -427,9 +399,16 @@ class MyView(QTableView):
         model = self.model().history[globals_.historyIndex]
         data = model[0]
         formulas = model[1]
-        self.model().formulas.clear()
-        self.model().formulas = formulas.copy()
+        alignments = model[2]
+        fonts = model[3]
+        foreground = model[4]
+        background = model[5]
+        self.model().formulas = copy.deepcopy(formulas)
         self.model().dataContainer = data.copy()
+        self.model().alignmentDict = alignments.copy()
+        self.model().fonts = fonts.copy()
+        self.model().foreground = foreground.copy()
+        self.model().background = background.copy()
         rows,columns = data.shape
         startIndex = self.model().index(0,0)
         endIndex = self.model().index(rows-1,columns-1)
@@ -506,38 +485,6 @@ class MyView(QTableView):
             self.overlay.setGeometry(self.rect())
         except AssertionError:
             pass
-
-    def copyAction(self):
-        '''Basic copy action funcionality'''
-        self.pasteMode = Qt.CopyAction
-        selectionModel = self.selectionModel()
-        selected = selectionModel.selectedIndexes()
-        self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
-        for action in self.actions():
-            if action.iconText() == 'Paste':
-                action.setDisabled(False)
-
-    def cutAction(self):
-        '''Basic cut action funcionality'''
-        self.pasteMode = Qt.MoveAction
-        selectionModel = self.selectionModel()
-        selected = selectionModel.selectedIndexes()
-        self.mimeDataToPaste = self.model().mimeData(selected,flag='keepTopIndex')
-        for action in self.actions():
-            if action.iconText() == 'Paste':
-                action.setDisabled(False)
-
-    def pasteAction(self):
-        '''Basic paste action functionality'''
-        try:
-            assert self.mimeDataToPaste
-        except AssertionError:
-            return
-        parent = self.currentIndex()
-        self.model().dropMimeData(self.mimeDataToPaste,self.pasteMode,-1,-1,parent)
-        if self.pasteMode == Qt.MoveAction:
-            self.mimeDataToPaste = None
-
 
 class Overlay(QWidget):
     '''Provides visual aesthetic for selections and drag functionality'''
