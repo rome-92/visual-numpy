@@ -205,17 +205,32 @@ class MyModel(QAbstractTableModel):
 
     def insertRows(self,row,count,parent=QModelIndex()):
         '''Inserts one row'''
-        self.dataContainer.resize((self.rowCount()+1,self.columnCount()))
         self.beginInsertRows(parent,row,row)
+        self.dataContainer.resize((self.rowCount()+1,self.columnCount()))
         self.endInsertRows()
         return True
 
     def insertColumns(self,column,count,parent=QModelIndex()):
         '''Inserts one column'''
-        self.dataContainer.resize((self.rowCount(),self.columnCount()+1))
+        dataType = np.dtype('U32,D')
+        newColumn = np.zeros(self.dataContainer.shape[0],dtype=dataType) 
         self.beginInsertColumns(parent,column,column)
+        self.dataContainer = np.column_stack((self.dataContainer,newColumn))
         self.endInsertColumns()
         return True
+
+    def updateArraySize(self,array):
+        '''Updates array size in case it's smaller than current array'''
+        dataType = np.dtype('U32,D')
+        rowsNumber = self.dataContainer.shape[0] - array.shape[0]
+        columnsNumber = self.dataContainer.shape[1] - array.shape[1]
+        if rowsNumber:
+            newRows = np.zeros((rowsNumber,self.dataContainer.shape[1]),dtype=dataType)
+            arrayResized = np.vstack((array,newRows))
+        if columnsNumber:
+            newColumns = np.zeros((self.dataContainer.shape[0],columnsNumber),dtype=dataType)
+            arrayResized = np.hstack((array,newColumns))
+        return arrayResized
 
     def getAlphanumeric(self,column,row):
         '''Gets the alphanumeric coordinate for the corresponding cell'''

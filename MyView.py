@@ -403,6 +403,8 @@ class MyView(QTableView):
         fonts = model[3]
         foreground = model[4]
         background = model[5]
+        if data.shape != self.model().dataContainer.shape:
+            data = self.model().updateArraySize(data)
         self.model().formulas = copy.deepcopy(formulas)
         self.model().dataContainer = data.copy()
         self.model().alignmentDict = alignments.copy()
