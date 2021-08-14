@@ -22,7 +22,7 @@ from PySide6.QtCore import QTimer, QSize, QEvent, Qt, Signal
 from PySide6.QtWidgets import (QMainWindow, QLineEdit, QToolBar, QLabel, QFileDialog,
                                QMessageBox, QFontComboBox, QComboBox, QColorDialog,
                                QPushButton)
-from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFontDatabase, QFont,
+from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFont,
                            QPixmap,QIcon,QBrush,QColor)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
