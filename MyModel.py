@@ -33,7 +33,7 @@ class MyModel(QAbstractTableModel):
         #creates a data type consisting of a unicode string of lenght 32 and a 128 bit complex number
         dataType = np.dtype('U32,D')
         #the array that will store the data is a 2 dimensional array
-        self.dataContainer = np.zeros((52,52),dtype=dataType)
+        self.dataContainer = {}
         self.formulas = []
         self.ftoapply = []
         self.formulaSnap = []
@@ -250,31 +250,26 @@ class MyModel(QAbstractTableModel):
     def data(self,index,role=Qt.DisplayRole):
         '''Returns the appropiate data for the corresponding role'''
         if role == Qt.DisplayRole:
-            returnValue = self.dataContainer\
-                    [index.row(),index.column()]
+            returnValue = self.dataContainer.get((index.row(),index.column()),'')
             try:
-                #checks if the value is a number
-                complex(returnValue['f0']) 
-            except Exception:
-                #if it's not a number returns the corresponding string
-                return returnValue['f0']  
-            else:
-                #if it's a number it first checks if it has an imaginary part
-                if returnValue['f1'].imag == 0: 
+                returnValue = complex(returnValue)
+                if returnValue.imag == 0: 
                     #if not it returns only the real part in string form
-                    if returnValue['f1'].real.is_integer():
+                    if returnValue.real.is_integer():
                         if self.thousandsSep:
-                            return '{:,d}'.format(int(returnValue['f1'].real))
+                            return '{:,d}'.format(int(returnValue.real))
                         else:
-                            return '{:d}'.format(int(returnValue['f1'].real))
+                            return '{:d}'.format(int(returnValue.real))
                     else:
                         if self.thousandsSep:
-                            return '{:,.8f}'.format(returnValue['f1'].real)
+                            return '{:,.8f}'.format(returnValue.real)
                         else:
-                            return '{:.8f}'.format(returnValue['f1'].real)
+                            return '{:.8f}'.format(returnValue.real)
                 else:
                     #if it does have an imaginary part it returns the real and im part without parenteses
-                    return returnValue['f0'].strip('()')
+                    return str(returnValue.strip('()'))
+            except ValueError:
+                return returnValue
         if role == Qt.BackgroundRole:
             if self.highlight:
                 if index.row() == self.highlight[0][0]:
@@ -299,21 +294,9 @@ class MyModel(QAbstractTableModel):
         if index.column() > self.dataContainer.shape[1]-1:
             self.insertColumn(self.columnCount())
         if role == Qt.EditRole:
-            if str(value) == self.dataContainer[index.row(),index.column()]['f0']: return True
-            try:
-                #checks if the value is a number
-                endValue = complex(value) 
-                #if it's a number the corresponding assignments are made
-                self.dataContainer[index.row(),index.column()]['f0'] = value 
-                self.dataContainer[index.row(),index.column()]['f1'] = endValue
-            except Exception:
-                if value != None:
-                    #if it's NaN then the number field 'f1' is set to zero
-                    self.dataContainer[index.row(),index.column()]['f0'] = value 
-                    self.dataContainer[index.row(),index.column()]['f1'] = 0
-                else:
-                    self.dataContainer[index.row(),index.column()]['f0'] = ''
-                    self.dataContainer[index.row(),index.column()]['f1'] = 0
+            if str(value) == self.data(index):
+                return True
+            self.dataContainer[(index.row(),index.column())] = value
             try:
                 assert self.formulas
             except AssertionError:
