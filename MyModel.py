@@ -34,6 +34,8 @@ class MyModel(QAbstractTableModel):
         dataType = np.dtype('U32,D')
         #the array that will store the data is a 2 dimensional array
         self.dataContainer = {}
+        self.rows = {52}
+        self.columns = {52}
         self.formulas = []
         self.ftoapply = []
         self.formulaSnap = []
@@ -198,24 +200,22 @@ class MyModel(QAbstractTableModel):
         self.ftoapply.clear()
 
     def columnCount(self,parent=QModelIndex()):
-        return self.dataContainer.shape[1]
+        return max(self.columns)
 
     def rowCount(self,parent=QModelIndex()):
-        return self.dataContainer.shape[0]
+        return max(self.rows)
 
     def insertRows(self,row,count,parent=QModelIndex()):
         '''Inserts one row'''
         self.beginInsertRows(parent,row,row)
-        self.dataContainer.resize((self.rowCount()+1,self.columnCount()))
+        self.rows.add(row + 1)
         self.endInsertRows()
         return True
 
     def insertColumns(self,column,count,parent=QModelIndex()):
         '''Inserts one column'''
-        dataType = np.dtype('U32,D')
-        newColumn = np.zeros(self.dataContainer.shape[0],dtype=dataType) 
         self.beginInsertColumns(parent,column,column)
-        self.dataContainer = np.column_stack((self.dataContainer,newColumn))
+        self.columns.add(column + 1)
         self.endInsertColumns()
         return True
 
@@ -289,14 +289,12 @@ class MyModel(QAbstractTableModel):
 
     def setData(self,index,value,role=Qt.EditRole,formulaTriggered=False):
         '''Sets the appropiate data for the corresponding role'''
-        if index.row() > self.dataContainer.shape[0]-1:
-            self.insertRow(self.rowCount())
-        if index.column() > self.dataContainer.shape[1]-1:
-            self.insertColumn(self.columnCount())
         if role == Qt.EditRole:
             if str(value) == self.data(index):
                 return True
             self.dataContainer[(index.row(),index.column())] = value
+            self.rows.add(index.row())
+            self.columns.add(index.column())
             try:
                 assert self.formulas
             except AssertionError:
