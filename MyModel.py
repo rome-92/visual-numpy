@@ -36,7 +36,7 @@ class MyModel(QAbstractTableModel):
         self.dataContainer = {}
         self.rows = {52}
         self.columns = {52}
-        self.formulas = []
+        self.formulas = {}
         self.ftoapply = []
         self.formulaSnap = []
         self.highlight = None
@@ -69,7 +69,6 @@ class MyModel(QAbstractTableModel):
         stream = QDataStream(encodedData,QIODevice.WriteOnly)
         rows = []
         columns = []
-        textMatrix = ''
         formulas = []
         for index in indexes:
             for f in self.formulas:
@@ -78,12 +77,6 @@ class MyModel(QAbstractTableModel):
                     break
             rows.append(index.row())
             columns.append(index.column())
-        clip = self.dataContainer[min(rows):max(rows)+1,min(columns):max(columns)+1]['f0']
-        for arrayRow in clip:
-            textMatrix += ','.join(arrayRow)
-            textMatrix += '\n'
-        textMatrix = textMatrix[:-1]
-        stream.writeQString(textMatrix)
         if flag == 'mouse':
             currentIndexRow = str(self.parent().currentIndex().row())
             currentIndexColumn = str(self.parent().currentIndex().column())
@@ -92,10 +85,14 @@ class MyModel(QAbstractTableModel):
         if flag == 'keepTopIndex':
             currentIndexRow = topLeftIndexRow
             currentIndexColumn = topLeftIndexColumn
+        bottomRightIndexRow = str(max(rows))
+        bottomRightIndexColumn = str(max(columns))
         stream.writeString(currentIndexRow)
         stream.writeString(currentIndexColumn)
         stream.writeString(topLeftIndexRow)
         stream.writeString(topLeftIndexColumn)
+        stream.writeString(bottomRightIndexRow)
+        stream.writeString(bottomRightIndexColumn)
         for f in formulas:
             stream.writeString(str(f.addressRow)+','+str(f.addressColumn))
         mimeData.setData('application/octet-stream',encodedData)
@@ -107,63 +104,41 @@ class MyModel(QAbstractTableModel):
             encodedData = data.data('application/octet-stream')
             stream = QDataStream(encodedData,QIODevice.ReadOnly)
             data = []
-            matrix = []
             while not stream.atEnd():
                 data.append(stream.readString())
-            textMatrix,rowFromData,columnFromData,topLeftRow,topLeftColumn = data[:5]
+            rowFromData,columnFromData,topLeftRow,topLeftColumn,bottomRightRow,bottomRightColumn = data[:6]
             rowFromData = int(rowFromData)
             columnFromData = int(columnFromData)
             topLeftRow = int(topLeftRow)
             topLeftColumn = int(topLeftColumn)
-            textMatrix = textMatrix.splitlines()
-            for textMatrixRow in textMatrix:
-                matrix.append(textMatrixRow.split(sep=','))
-            dropArray = np.array(matrix)
+            bottomRightRow = int(bottomRightRow)
+            bottomRightColumn = int(bottomRightColumn)
             dropRow = parent.row()
             dropColumn = parent.column()
             newRowDifference = dropRow - rowFromData
             newColumnDifference = dropColumn - columnFromData
-            newRow = topLeftRow + newRowDifference
-            newColumn = topLeftColumn + newColumnDifference
-            dropArrayShape = dropArray.shape
-            dropArrayRows = dropArrayShape[0]
-            dropArrayColumns = dropArrayShape[1]
-            self.formulaSnap = self.formulas.copy()
-            formulasAddresses = set()
-            if action == Qt.MoveAction:
-                if len(data) > 5:
-                    formulas2move = data[5:]
-                    for f in formulas2move:
-                        address = eval(f)
-                        row = address[0]
-                        column = address[1]
-                        for modelFormula in self.formulas:
-                            if modelFormula.addressRow == row and modelFormula.addressColumn == column:
-                                try:
-                                    modelFormula.addressRow = row + newRowDifference
-                                    modelFormula.addressColumn = column + newColumnDifference
-                                    self.checkForCircularRef(modelFormula,newRowDifference,newColumnDifference)
-                                    formulasAddresses.add((modelFormula.addressRow,modelFormula.addressColumn))
-                                except Exception as e:
-                                    traceback.print_tb(e.__traceback__)
-                                    print(e)
-                                    modelFormula.addressRow = row
-                                    modelFormula.addressColumn = column
-                for row in range(topLeftRow,topLeftRow+dropArrayRows):
-                    for column in range(topLeftColumn,topLeftColumn+dropArrayColumns):
-                        self.setData(self.index(row,column),'',formulaTriggered=True)
-            selectionModel = self.parent().selectionModel()
-            selectionModel.clear()
-            for row,y in zip(dropArray,range(newRow,newRow+dropArrayRows)):
-                for column,x in zip(row,range(newColumn,newColumn+dropArrayColumns)):
-                    if (y,x) in formulasAddresses:
-                        self.setData(self.index(y,x),column,formulaTriggered=True)
-                    else:
-                        self.setData(self.index(y,x),column,formulaTriggered='ERASE')
-                    selectionModel.select(self.index(y,x),QItemSelectionModel.Select)
-            if self.ftoapply:
-                self.updateModel_()
-            self.parent().saveToHistory()
+            newTopRow = topLeftRow + newRowDifference
+            newTopColumn = topLeftColumn + newColumnDifference
+            newBottomRow = bottomRightRow + newRowDifference
+            newBottomColumn = bottomRightColumn + newColumnDifference
+            if formulas := data[6:]:
+                for i,formula in enumerate(formulas):
+                    formulas[i] = eval(formula)
+            for row in range(topLeftRow,bottomRightRow + 1):
+                for column in range(topLeftColumn,bottomRightColumn + 1):
+                    self.setData(self.index(row+newRowDifference,column+newColumnDifference),
+                            self.dataContainer[(row,column)],role='ERASE')
+                    if f := self.formulas.get((row,column),None):
+                        try:
+                            self.checkForCircularRef(f,(newRowDifference,newColumnDifference))
+                            f.addressRow = f.addressRow + newRowDifference
+                            f.addressColumn = f.addressColumn + newColumnDifference
+                            self.dataContainer[(row+newRowDifference,column+newColumnDifference)] = f
+                        except:
+                            f.addressRow = row
+                            f.addressColumn = column
+                    del self.dataContainer[(row,column)]
+            self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
     def checkForCircularRef(self,formula,*deltas):
