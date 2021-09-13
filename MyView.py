@@ -271,22 +271,18 @@ class MyView(QTableView):
         if indexesSet.intersection(domainIndexesSet):
             raise CircularReferenceError(resultIndexRow,resultIndexColumn)
         if self.model().formulas:
-            for f_ in self.model().formulas:
+            for f_ in self.model().formulas.values():
                 formulaIndexSet = set(f_.indexes)
                 if domainIndexesSet.intersection(formulaIndexSet):
                     self.circularReferenceCheck(indexesSet,f_)
-            for f_ in self.model().formulas:
-                if f_.addressRow == resultIndexRow and f_.addressColumn == resultIndexColumn:
-                    if f_.text != text:
-                        self.model().formulas.remove(f_)
-                        self.model().formulas.append(Formula(text,address,indexes,domainIndexes))
-                        break
-                    else:
-                        break
+            if f_ := self.view.model().dataContainer.get((resultIndexRow,resultIndexColumn),None):
+                if f_.text != text:
+                    del self.model().formulas[row,column]
+                    self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
             else:
-                self.model().formulas.append(Formula(text,address,indexes,domainIndexes))
+                self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
         else:
-            self.model().formulas.append(Formula(text,address,indexes,domainIndexes))
+            self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
 
     def circularReferenceCheck(self,subject,match):
         '''Checks for possible circular references which are not allowed by design'''
