@@ -818,17 +818,20 @@ class MainWindow(QMainWindow):
             #gets the rows for start and end coords of array
             rows = [limits[0][0],limits[1][0]+1]                            
             columns = [limits[0][1],limits[1][1]+1]
-            data = self.view.model().dataContainer[rows[0]:rows[1],columns[0]:columns[1]]['f0']
-            for cell in data.flat:
-                if cell != '':
+            height = rows[1] - rows[0]
+            widht = columns[1] - columns[0]
+            array = np.zeros((height,width),np.complex_)
+            for y,row in enum(range(rows[0],rows[1])):
+                for x,column in enum(range(columns[0],columns[1])):
+                    element = self.view.model().dataContainer.get((row,column),0)
                     try:
-                        complex(cell)
+                        element = complex(element)
                     except Exception as e:
                         print(e)
                         return
+                    array[y,x] = element
             #gets the complex value of the data model array and appends it to numpyArraylList
-            data = self.view.model().dataContainer[rows[0]:rows[1],columns[0]:columns[1]]['f1']
-            numpyArrayList.append(data)                                                             
+            numpyArrayList.append(array)                                                             
         #list to store names for each of the arrays
         idPool = set()
         #condition to match the quantity of names to the same as arrays
@@ -855,7 +858,7 @@ class MainWindow(QMainWindow):
             row = i[0]
             column = i[1]
             #gets the string representation of the assumed complex number
-            number = self.view.model().dataContainer[row,column]['f0'] 
+            number = self.view.model().dataContainer.get((row,column),0)
             if number != '':
                 #tries to convert to a complex number
                 try:
