@@ -274,10 +274,8 @@ class MyModel(QAbstractTableModel):
             except AssertionError:
                 return True
             if formulaTriggered == 'ERASE':
-                for f in self.formulas:
-                    if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        self.formulas.remove(f)
-                        break
+                if f := self.formulas.get((index.row(),index.column()),None):
+                    del self.formulas[index.row(),index.column()]
                 for f in self.formulaSnap.copy():
                     for i in f.indexes:
                         if index.row() == i[0] and index.column() == i[1]:
@@ -292,11 +290,9 @@ class MyModel(QAbstractTableModel):
                             self.formulaSnap.remove(f)
                             break
             elif formulaTriggered == False:
-                for f in self.formulas:
-                    if index.row() == f.addressRow and index.column() == f.addressColumn:
-                        self.formulas.remove(f)
-                        break
-                for f in self.formulas:
+                if f := self.formulas.get((index.row(),index.column()),None):
+                    del self.formulas[index.row(),index.column()]
+                for f in self.formulas.values():
                     for i in f.indexes:
                         if index.row() == i[0] and index.column() == i[1]:
                             self.ftoapply.append(f)
