@@ -337,14 +337,8 @@ class MainWindow(QMainWindow):
             self.encodeFonts(fonts)
             self.encodeColors(foreground)
             self.encodeColors(background)
-            nonzeroes = np.nonzero(model['f0'])
-            rows = nonzeroes[0]
-            columns = nonzeroes[1]
-            maxrow = rows[rows.argmax()]
-            maxcolumn = columns[columns.argmax()]
-            finalModel = model[:maxrow+1,:maxcolumn+1]['f0']
             with open(name+'.vnp','wb') as myFile:
-                pickle.dump(finalModel,myFile)
+                pickle.dump(model,myFile)
                 pickle.dump(self.view.model().formulas,myFile)
                 pickle.dump(alignment, myFile)
                 pickle.dump(fonts, myFile)
