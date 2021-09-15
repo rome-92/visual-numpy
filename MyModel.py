@@ -131,11 +131,12 @@ class MyModel(QAbstractTableModel):
                             self.checkForCircularRef(f,(newRowDifference,newColumnDifference))
                             f.addressRow = f.addressRow + newRowDifference
                             f.addressColumn = f.addressColumn + newColumnDifference
-                            self.dataContainer[(row+newRowDifference,column+newColumnDifference)] = f
+                            self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
                         except:
                             f.addressRow = row
                             f.addressColumn = column
-                    del self.dataContainer[(row,column)]
+                    if action == Qt.MoveAction:
+                        del self.dataContainer[(row,column)]
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
