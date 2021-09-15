@@ -71,10 +71,8 @@ class MyModel(QAbstractTableModel):
         columns = []
         formulas = []
         for index in indexes:
-            for f in self.formulas:
-                if f.addressRow == index.row() and f.addressColumn == index.column():
-                    formulas.append(f)
-                    break
+            if f := self.formulas.get((index.row(),index.column(),None)):
+                formulas.append(f)
             rows.append(index.row())
             columns.append(index.column())
         if flag == 'mouse':
