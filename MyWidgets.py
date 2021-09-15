@@ -518,13 +518,22 @@ class MainWindow(QMainWindow):
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','csv file (*.csv)')
         if name:
             model = self.view.model().dataContainer
-            nonzeroes = np.nonzero(model['f0'])
-            rows = nonzeroes[0]
-            columns = nonzeroes[1]
-            maxrow = rows[rows.argmax()]
-            maxcolumn = columns[columns.argmax()]
-            finalModel = model[:maxrow+1,:maxcolumn+1]['f0']
-            np.savetxt(name,finalModel,delimiter=',',fmt='%-1s')
+            rows = []
+            columns = []
+            for index in self.view.model().dataContainer.keys():
+                rows.append(index[0])
+                columns.append(index[1])
+            topRow = min(rows)
+            bottomRow = max(rows)
+            leftColumn = min(columns)
+            rightColumn = max(columns)
+            height = bottomRow - topRow + 1
+            width = rightColumn - leftColumn + 1
+            array = np.zeros((height,width),dtype=np.complex_)
+            for row in range(topRow,bottomRow+1):
+                for column in range(leftColumn,rightColumn+1):
+                    array[row,column] = complex(model[row,column])
+            np.savetxt(name,array,delimiter=',',fmt='%-1s')
             info = name+ ' was succesfully exported'
             self.statusBar().showMessage(info,5000)
 
