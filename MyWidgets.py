@@ -259,15 +259,14 @@ class MainWindow(QMainWindow):
 
     def createNew(self):
         '''Creates a new file and clears history'''
-        dataType = np.dtype('U32,D')
-        self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
+        self.view.model().dataContainer = {}
         self.view.model().formulas.clear()
         self.view.model().alignmentDict.clear()
         self.view.model().fonts.clear()
         self.viewl.model().foreground.clear()
         self.view.model().background.clear()
         self.view.model().history.clear()
-        self.view.model().history.append((self.view.model().dataContainer.copy(),
+        self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                 copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                 self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                 self.view.model().background.copy()))
