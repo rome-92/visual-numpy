@@ -493,20 +493,15 @@ class MainWindow(QMainWindow):
                     self.decodeFonts(fonts)
                     self.decodeColors(foreground)
                     self.decodeColors(background)
-                    dataType = np.dtype('U32,D')
-                    self.view.model().dataContainer = np.zeros((52,52),dtype=dataType)
+                    self.view.model().dataContainer = loadedModel
                     self.view.model().alignmentDict = alignment
                     self.view.model().fonts = fonts
                     self.view.model().foreground = foreground
                     self.view.model().background = background
                     self.view.model().formulas.clear()
                     self.view.model().history.clear()
-                    for rowNumber,row in enumerate(loadedModel):
-                        for columnNumber,column in enumerate(row):
-                            index = self.view.model().createIndex(rowNumber,columnNumber)
-                            self.view.model().setData(index,column)
                     self.view.model().formulas = formulas
-                    self.view.model().history.append((self.view.model().dataContainer.copy(),
+                    self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
