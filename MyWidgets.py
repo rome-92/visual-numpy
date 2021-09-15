@@ -464,7 +464,16 @@ class MainWindow(QMainWindow):
             width = rightColumn - leftColumn + 1
             if height * width == len(selected):
                 model = self.view.model().dataContainer
-                array = model[topRow:bottomRow+1,leftColumn:rightColumn+1]
+                array = np.zeros((height,width),dtype=np.complex_)
+                for row in range(topRow,bottomRow+1):
+                    for column in range(leftColumn,rightColumn+1):
+                        try:
+                            number = complex(self.view.model().data(self.view.model().index(row,column)))
+                        except:
+                            info = 'There was an error while saving array'
+                            self.statusBar().showMessage(info,5000)
+                            return
+                        array[row,column] = number
                 np.save(name,array)
                 info = name+ ' was succesfully saved'
                 self.statusBar().showMessage(info,5000)
