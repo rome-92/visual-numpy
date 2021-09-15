@@ -530,9 +530,9 @@ class MainWindow(QMainWindow):
             height = bottomRow - topRow + 1
             width = rightColumn - leftColumn + 1
             array = np.zeros((height,width),dtype=np.complex_)
-            for row in range(topRow,bottomRow+1):
-                for column in range(leftColumn,rightColumn+1):
-                    array[row,column] = complex(model[row,column])
+            for y,row in enum(range(topRow,bottomRow+1)):
+                for x,column in enum(range(leftColumn,rightColumn+1)):
+                    array[y,x] = complex(model[row,column])
             np.savetxt(name,array,delimiter=',',fmt='%-1s')
             info = name+ ' was succesfully exported'
             self.statusBar().showMessage(info,5000)
