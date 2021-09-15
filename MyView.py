@@ -137,14 +137,12 @@ class MyView(QTableView):
                     self.parent().alignD.setChecked(True)
                 else:
                     self.parent().alignM.setChecked(True)
-                for f in self.model().formulas:
-                    if f.addressRow == index.row() and f.addressColumn == index.column():
-                        self.parent().commandLineEdit.setText('='+f.text)
-                        globals_.domainHighlight = True
-                        for d in f.domain:
-                            coloredIndex = self.model().index(d[0],d[1])
-                            self.model().setData(coloredIndex,QColor(119,242,178),role=Qt.BackgroundRole)
-                        break
+                if f := self.model().formulas.get((index.row(),index.column),None):
+                    self.parent().commandLineEdit.setText('='+f.text)
+                    globals_.domainHighlight = True
+                    for d in f.domain:
+                        coloredIndex = self.model().index(d[0],d[1])
+                        self.model().setData(coloredIndex,QColor(119,242,178),role=Qt.BackgroundRole)
             else:
                 for action in self.actions():
                     if action.objectName() == 'merge':
