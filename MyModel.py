@@ -169,7 +169,7 @@ class MyModel(QAbstractTableModel):
     def updateModel_(self):
         '''Executes formulas if any are pending of updating'''
         for f in self.ftoapply:
-            if f in self.formulas:
+            if f in self.formulas.values():
                 self.parent().parent().calculate(f.text,f.addressRow,f.addressColumn,flag=True)
         self.ftoapply.clear()
 
