@@ -289,7 +289,7 @@ class MyView(QTableView):
             index = self.parent().commandLineEdit.currentIndex
             raise CircularReferenceError(index.row(),index.column())
         else:
-            for f in self.model().formulas:
+            for f in self.model().formulas.values():
                 formulaIndexSet = set(f.indexes)
                 if formulaDomainSet.intersection(formulaIndexSet):
                     self.circularReferenceCheck(subject,f)
