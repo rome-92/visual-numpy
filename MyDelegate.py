@@ -46,7 +46,7 @@ class MyDelegate(QStyledItemDelegate):
         model.setData(index,editor.text())
         model.setData(index,textColor,role=Qt.ForegroundRole)
         model.setData(index,backColor,role=Qt.BackgroundRole)
-        for f in model.formulas:
+        for f in model.formulas.values():
             if (index.row(),index.column()) in f.domain:
                 model.setData(index,QColor(255,69,69),role=Qt.BackgroundRole)
                 break
