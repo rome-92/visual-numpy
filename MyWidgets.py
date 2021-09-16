@@ -821,8 +821,8 @@ class MainWindow(QMainWindow):
             height = rows[1] - rows[0]
             width = columns[1] - columns[0]
             array = np.zeros((height,width),np.complex_)
-            for y,row in enum(range(rows[0],rows[1])):
-                for x,column in enum(range(columns[0],columns[1])):
+            for y,row in enumerate(range(rows[0],rows[1])):
+                for x,column in enumerate(range(columns[0],columns[1])):
                     element = self.view.model().dataContainer.get((row,column),0)
                     try:
                         element = complex(element)
