@@ -819,7 +819,7 @@ class MainWindow(QMainWindow):
             rows = [limits[0][0],limits[1][0]+1]                            
             columns = [limits[0][1],limits[1][1]+1]
             height = rows[1] - rows[0]
-            widht = columns[1] - columns[0]
+            width = columns[1] - columns[0]
             array = np.zeros((height,width),np.complex_)
             for y,row in enum(range(rows[0],rows[1])):
                 for x,column in enum(range(columns[0],columns[1])):
