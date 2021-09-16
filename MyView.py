@@ -137,7 +137,7 @@ class MyView(QTableView):
                     self.parent().alignD.setChecked(True)
                 else:
                     self.parent().alignM.setChecked(True)
-                if f := self.model().formulas.get((index.row(),index.column),None):
+                if f := self.model().formulas.get((index.row(),index.column()),None):
                     self.parent().commandLineEdit.setText('='+f.text)
                     globals_.domainHighlight = True
                     for d in f.domain:
