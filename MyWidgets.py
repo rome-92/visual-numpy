@@ -891,7 +891,7 @@ class MainWindow(QMainWindow):
         if type(result) is np.ndarray:
             resultIndexRow = resultIndex[0]
             resultIndexColumn = resultIndex[1]
-            self.view.model().formulaSnap = self.view.model().formulas.copy()
+            self.view.model().formulaSnap = copy.deepcopy(self.view.model().formulas).values()
             if len(result.shape) == 2:
                 #gets the shape of the result
                 resultRows = result.shape[0]
@@ -964,7 +964,7 @@ class MainWindow(QMainWindow):
                     return
             startIndex = self.view.model().createIndex(resultIndexRow,resultIndexColumn)
             endIndex = startIndex
-            self.view.model().formulaSnap = self.view.model().formulas.copy()
+            self.view.model().formulaSnap = copy.deepcopy(self.view.model().formulas).values()
             self.view.model().setData(startIndex,globals_.currentFont,role=Qt.FontRole)
             self.view.model().setData(startIndex,result,formulaTriggered=True)
             self.view.model().dataChanged.emit(startIndex,endIndex)
