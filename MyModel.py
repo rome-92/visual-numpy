@@ -250,12 +250,14 @@ class MyModel(QAbstractTableModel):
 
     def setData(self,index,value,role=Qt.EditRole,formulaTriggered=False):
         '''Sets the appropiate data for the corresponding role'''
+        if index.row() > self.rowCount() - 1:
+            self.insertRows(self.rowCount(),1)
+        if index.column() > self.columnCount() -1:
+            self.insertColumns(self.columnCount(),1)
         if role == Qt.EditRole:
             if str(value) == self.data(index):
                 return True
             self.dataContainer[(index.row(),index.column())] = value
-            self.rows.add(index.row())
-            self.columns.add(index.column())
             try:
                 assert self.formulas
             except AssertionError:
