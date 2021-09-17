@@ -465,15 +465,15 @@ class MainWindow(QMainWindow):
             if height * width == len(selected):
                 model = self.view.model().dataContainer
                 array = np.zeros((height,width),dtype=np.complex_)
-                for row in range(topRow,bottomRow+1):
-                    for column in range(leftColumn,rightColumn+1):
+                for y,row in enumerate(range(topRow,bottomRow+1)):
+                    for x,column in enumerate(range(leftColumn,rightColumn+1)):
                         try:
                             number = complex(self.view.model().data(self.view.model().index(row,column)))
                         except:
                             info = 'There was an error while saving array'
                             self.statusBar().showMessage(info,5000)
                             return
-                        array[row,column] = number
+                        array[y,x] = number
                 np.save(name,array)
                 info = name+ ' was succesfully saved'
                 self.statusBar().showMessage(info,5000)
