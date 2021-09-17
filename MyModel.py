@@ -193,19 +193,6 @@ class MyModel(QAbstractTableModel):
         self.endInsertColumns()
         return True
 
-    def updateArraySize(self,array):
-        '''Updates array size in case it's smaller than current array'''
-        dataType = np.dtype('U32,D')
-        rowsNumber = self.dataContainer.shape[0] - array.shape[0]
-        columnsNumber = self.dataContainer.shape[1] - array.shape[1]
-        if rowsNumber:
-            newRows = np.zeros((rowsNumber,self.dataContainer.shape[1]),dtype=dataType)
-            arrayResized = np.vstack((array,newRows))
-        if columnsNumber:
-            newColumns = np.zeros((self.dataContainer.shape[0],columnsNumber),dtype=dataType)
-            arrayResized = np.hstack((array,newColumns))
-        return arrayResized
-
     def getAlphanumeric(self,column,row):
         '''Gets the alphanumeric coordinate for the corresponding cell'''
         if column < 26:
