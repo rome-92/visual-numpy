@@ -189,7 +189,7 @@ class MyModel(QAbstractTableModel):
     def insertColumns(self,column,count,parent=QModelIndex()):
         '''Inserts one column'''
         self.beginInsertColumns(parent,column,column)
-        self.columns.add(column + 1)
+        self.columns += 1
         self.endInsertColumns()
         return True
 
