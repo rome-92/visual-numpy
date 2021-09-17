@@ -530,12 +530,16 @@ class MainWindow(QMainWindow):
             height = bottomRow - topRow + 1
             width = rightColumn - leftColumn + 1
             array = np.zeros((height,width),dtype=np.complex_)
-            for y,row in enumerate(range(topRow,bottomRow+1)):
-                for x,column in enumerate(range(leftColumn,rightColumn+1)):
-                    array[y,x] = complex(model[row,column])
-            np.savetxt(name,array,delimiter=',',fmt='%-1s')
-            info = name+ ' was succesfully exported'
-            self.statusBar().showMessage(info,5000)
+            try:
+                for y,row in enumerate(range(topRow,bottomRow+1)):
+                    for x,column in enumerate(range(leftColumn,rightColumn+1)):
+                        array[y,x] = complex(model[row,column])
+                np.savetxt(name,array,delimiter=',',fmt='%-1s')
+                info = name+ ' was succesfully exported'
+                self.statusBar().showMessage(info,5000)
+            except:
+                info = 'There was an error exporting ' + name
+                self.statusBar().showMessage(info,5000)
 
     def setThousandsSep(self):
         '''Simple enable/disable thousands separator'''
