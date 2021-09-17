@@ -34,8 +34,8 @@ class MyModel(QAbstractTableModel):
         dataType = np.dtype('U32,D')
         #the array that will store the data is a 2 dimensional array
         self.dataContainer = {}
-        self.rows = {52}
-        self.columns = {52}
+        self.rows = 52
+        self.columns = 52
         self.formulas = {}
         self.ftoapply = []
         self.formulaSnap = []
