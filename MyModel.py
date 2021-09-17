@@ -177,7 +177,7 @@ class MyModel(QAbstractTableModel):
         return self.columns
 
     def rowCount(self,parent=QModelIndex()):
-        return max(self.rows)
+        return self.rows
 
     def insertRows(self,row,count,parent=QModelIndex()):
         '''Inserts one row'''
