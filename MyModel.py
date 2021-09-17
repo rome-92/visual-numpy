@@ -174,7 +174,7 @@ class MyModel(QAbstractTableModel):
         self.ftoapply.clear()
 
     def columnCount(self,parent=QModelIndex()):
-        return max(self.columns)
+        return self.columns
 
     def rowCount(self,parent=QModelIndex()):
         return max(self.rows)
