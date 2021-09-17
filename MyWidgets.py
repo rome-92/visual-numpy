@@ -862,7 +862,7 @@ class MainWindow(QMainWindow):
             row = i[0]
             column = i[1]
             #gets the string representation of the assumed complex number
-            number = self.view.model().dataContainer.get((row,column),0)
+            number = self.view.model().dataContainer.get((row,column),'0')
             if number != '':
                 #tries to convert to a complex number
                 try:
@@ -895,7 +895,7 @@ class MainWindow(QMainWindow):
         if type(result) is np.ndarray:
             resultIndexRow = resultIndex[0]
             resultIndexColumn = resultIndex[1]
-            self.view.model().formulaSnap = list(copy.deepcopy(self.view.model().formulas).values())
+            self.view.model().formulaSnap = list(self.view.model().formulas.values())
             if len(result.shape) == 2:
                 #gets the shape of the result
                 resultRows = result.shape[0]
@@ -913,7 +913,7 @@ class MainWindow(QMainWindow):
                         return
                 for line,rY in zip(result,range(resultIndexRow,resultIndexRow+resultRows)):
                     for dE,cX in zip(line,range(resultIndexColumn,resultIndexColumn+resultColumns)):
-                        ind =self.view.model().createIndex(rY,cX)
+                        ind = self.view.model().createIndex(rY,cX)
                         self.view.model().setData(ind,globals_.currentFont,role=Qt.FontRole)
                         self.view.model().setData(ind,dE,formulaTriggered=True)
                 startIndex = self.view.model().index(resultIndexRow,resultIndexColumn)
@@ -968,7 +968,7 @@ class MainWindow(QMainWindow):
                     return
             startIndex = self.view.model().createIndex(resultIndexRow,resultIndexColumn)
             endIndex = startIndex
-            self.view.model().formulaSnap = list(copy.deepcopy(self.view.model().formulas).values())
+            self.view.model().formulaSnap = list(self.view.model().formulas.values())
             self.view.model().setData(startIndex,globals_.currentFont,role=Qt.FontRole)
             self.view.model().setData(startIndex,result,formulaTriggered=True)
             self.view.model().dataChanged.emit(startIndex,endIndex)
