@@ -275,12 +275,12 @@ class MyView(QTableView):
                     self.circularReferenceCheck(indexesSet,f_)
             if f_ := self.model().dataContainer.get((resultIndexRow,resultIndexColumn),None):
                 if f_.text != text:
-                    del self.model().formulas[row,column]
-                    self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
+                    del self.model().formulas[resultIndexRow,resultIndexColumn]
+                    self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
             else:
-                self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
+                self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
         else:
-            self.model().formulas[row,column] = Formula(text,address,indexes,domainIndexes)
+            self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
 
     def circularReferenceCheck(self,subject,match):
         '''Checks for possible circular references which are not allowed by design'''
