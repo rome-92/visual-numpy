@@ -30,9 +30,6 @@ class MyModel(QAbstractTableModel):
     def __init__(self,parent=None):
         '''Initialize the model'''
         super().__init__(parent)
-        #creates a data type consisting of a unicode string of lenght 32 and a 128 bit complex number
-        dataType = np.dtype('U32,D')
-        #the array that will store the data is a 2 dimensional array
         self.dataContainer = {}
         self.rows = 52
         self.columns = 52
@@ -46,7 +43,7 @@ class MyModel(QAbstractTableModel):
         self.background = {}
         self.foreground = {}
         self.history = []
-        self.history.append((self.dataContainer.copy(),copy.deepcopy(self.formulas),self.alignmentDict.copy(),
+        self.history.append((copy.deepcopy(self.dataContainer),copy.deepcopy(self.formulas),self.alignmentDict.copy(),
             self.fonts.copy(),self.foreground.copy(),self.background.copy()))
         self.thousandsSep = True
 
