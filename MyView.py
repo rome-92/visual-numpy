@@ -416,7 +416,7 @@ class MyView(QTableView):
             selectedIndexes = selectionModel.selectedIndexes()
             rows = []
             columns = []
-            self.model().formulaSnap = copy.deepcopy(self.model().formulas).values()
+            self.model().formulaSnap = list(self.model().formulas.values())
             for selIndex in selectedIndexes:
                 self.model().setData(selIndex,'',formulaTriggered='ERASE')
                 rows.append(selIndex.row())
@@ -439,8 +439,8 @@ class MyView(QTableView):
             elif event.key() == Qt.Key_Return:
                 if selected := self.selectionModel().selectedIndexes():
                     index2copy = selected[0]
-                    data2copy = self.model().dataContainer[index2copy.row(),index2copy.column()]['f0']
-                    self.model().formulaSnap = copy.deepcopy(self.model().formulas).values()
+                    data2copy = self.model().dataContainer[index2copy.row(),index2copy.column()]
+                    self.model().formulaSnap = list(self.model().formulas.values())
                     for ind in selected[1:]:
                         self.model().setData(ind,data2copy,formulaTriggered='ERASE')
                     if self.model().ftoapply:
