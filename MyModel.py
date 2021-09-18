@@ -225,7 +225,7 @@ class MyModel(QAbstractTableModel):
                             return '{:.8f}'.format(returnValue.real)
                 else:
                     #if it does have an imaginary part it returns the real and im part without parenteses
-                    return str(returnValue.strip('()'))
+                    return str(returnValue).strip('()')
             except ValueError:
                 return returnValue
         if role == Qt.BackgroundRole:
