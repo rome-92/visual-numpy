@@ -396,17 +396,14 @@ class MyView(QTableView):
         fonts = model[3]
         foreground = model[4]
         background = model[5]
-        if data.shape != self.model().dataContainer.shape:
-            data = self.model().updateArraySize(data)
         self.model().formulas = copy.deepcopy(formulas)
-        self.model().dataContainer = data.copy()
+        self.model().dataContainer = copy.deepcopy(data)
         self.model().alignmentDict = alignments.copy()
         self.model().fonts = fonts.copy()
         self.model().foreground = foreground.copy()
         self.model().background = background.copy()
-        rows,columns = data.shape
         startIndex = self.model().index(0,0)
-        endIndex = self.model().index(rows-1,columns-1)
+        endIndex = self.model().index(self.model().rowCount()-1,self.model().columnCount()-1)
         self.model().dataChanged.emit(startIndex,endIndex)
 
     def keyPressEvent(self,event):
