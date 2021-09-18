@@ -20,7 +20,7 @@
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor,QBrush
 import globals_
 
 class MyDelegate(QStyledItemDelegate):
@@ -48,7 +48,7 @@ class MyDelegate(QStyledItemDelegate):
         model.setData(index,backColor,role=Qt.BackgroundRole)
         for f in model.formulas.values():
             if (index.row(),index.column()) in f.domain:
-                model.setData(index,QColor(255,69,69),role=Qt.BackgroundRole)
+                model.setData(index,QBrush(QColor(255,69,69)),role=Qt.BackgroundRole)
                 break
         self.parent().saveToHistory()
 
