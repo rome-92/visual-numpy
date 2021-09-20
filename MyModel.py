@@ -122,7 +122,7 @@ class MyModel(QAbstractTableModel):
             for row in range(topLeftRow,bottomRightRow + 1):
                 for column in range(topLeftColumn,bottomRightColumn + 1):
                     self.setData(self.index(row+newRowDifference,column+newColumnDifference),
-                            self.dataContainer[(row,column)],role='ERASE')
+                            self.dataContainer[(row,column)],formulaTriggered='ERASE')
                     if f := self.formulas.get((row,column),None):
                         try:
                             self.checkForCircularRef(f,(newRowDifference,newColumnDifference))
