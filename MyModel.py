@@ -68,7 +68,7 @@ class MyModel(QAbstractTableModel):
         columns = []
         formulas = []
         for index in indexes:
-            if f := self.formulas.get((index.row(),index.column(),None)):
+            if f := self.formulas.get((index.row(),index.column()),None):
                 formulas.append(f)
             rows.append(index.row())
             columns.append(index.column())
@@ -123,15 +123,18 @@ class MyModel(QAbstractTableModel):
                 for column in range(topLeftColumn,bottomRightColumn + 1):
                     self.setData(self.index(row+newRowDifference,column+newColumnDifference),
                             self.dataContainer[(row,column)],formulaTriggered='ERASE')
-                    if f := self.formulas.get((row,column),None):
-                        try:
-                            self.checkForCircularRef(f,(newRowDifference,newColumnDifference))
-                            f.addressRow = f.addressRow + newRowDifference
-                            f.addressColumn = f.addressColumn + newColumnDifference
-                            self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                        except:
-                            f.addressRow = row
-                            f.addressColumn = column
+                    if action == Qt.MoveAction:
+                        if f := self.formulas.get((row,column),None):
+                            try:
+                                self.checkForCircularRef(f,newRowDifference,newColumnDifference)
+                                f.addressRow = f.addressRow + newRowDifference
+                                f.addressColumn = f.addressColumn + newColumnDifference
+                                self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
+                                del self.formulas[row,column]
+                            except Exception as e:
+                                print(e)
+                                f.addressRow = row
+                                f.addressColumn = column
                     if action == Qt.MoveAction:
                         del self.dataContainer[(row,column)]
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
