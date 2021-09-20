@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.0.2'
+version = '2.1.0'
 
 class MainWindow(QMainWindow):
     
@@ -351,14 +351,7 @@ class MainWindow(QMainWindow):
     def encodeFonts(self,fonts):
         '''Encodes font objects so they can be pickled'''
         for i,f in fonts.items():
-            family = f.family()
-            size = f.pointSizeF()
-            if size.is_integer():
-                size = int(size)
-            bold = f.bold()
-            italic = f.italic()
-            underline = f.underline()
-            fonts[i] = [family,size,bold,italic,underline]
+            fonts[i] = f.toString()
 
     def encodeColors(self,brushes):
         '''Encodes colors so they can be pickled'''
@@ -369,12 +362,8 @@ class MainWindow(QMainWindow):
     def decodeFonts(self,fonts):
         '''Decodes fonts so they can be used'''
         for i,f in fonts.items():
-            font = QFont(f[0])
-            font.setPointSizeF(f[1])
-            font.setBold(f[2])
-            font.setItalic(f[3])
-            font.setUnderline(f[4])
-            fonts[i] = font
+            fonts[i] = QFont()
+            fonts[i].fromString(f)
 
     def decodeColors(self,colors):
         '''Decodes colors so they can be used'''
