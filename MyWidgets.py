@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.0'
+version = '2.1.1'
 
 class MainWindow(QMainWindow):
     
@@ -276,7 +276,7 @@ class MainWindow(QMainWindow):
         name,notUsed = QFileDialog.getOpenFileName(self,'Import File','','csv files (*.csv)')
         if name:
             try:
-                with open(name,newline='') as myFile:
+                with open(name,encoding='latin',newline='') as myFile:
                     reader = csv.reader(myFile,dialect='excel')
                     self.view.model().dataContainer = {}
                     self.view.model().formulas.clear()
