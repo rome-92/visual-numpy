@@ -135,7 +135,6 @@ class MyModel(QAbstractTableModel):
                                 print(e)
                                 f.addressRow = row
                                 f.addressColumn = column
-                    if action == Qt.MoveAction:
                         del self.dataContainer[(row,column)]
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True

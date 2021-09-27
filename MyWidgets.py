@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.1'
+version = '2.1.2'
 
 class MainWindow(QMainWindow):
     
@@ -512,21 +512,19 @@ class MainWindow(QMainWindow):
             for index in self.view.model().dataContainer.keys():
                 rows.append(index[0])
                 columns.append(index[1])
-            topRow = min(rows)
             bottomRow = max(rows)
-            leftColumn = min(columns)
             rightColumn = max(columns)
-            height = bottomRow - topRow + 1
-            width = rightColumn - leftColumn + 1
-            array = np.zeros((height,width),dtype=np.complex_)
+            dt = np.dtype('U64')
+            array = np.zeros((bottomRow+1,rightColumn+1),dtype=dt)
             try:
-                for y,row in enumerate(range(topRow,bottomRow+1)):
-                    for x,column in enumerate(range(leftColumn,rightColumn+1)):
-                        array[y,x] = complex(model[row,column])
+                for row in range(0,bottomRow+1):
+                    for column in range(0,rightColumn+1):
+                        array[row,column] = self.view.model().dataContainer.get((row,column),'')
                 np.savetxt(name,array,delimiter=',',fmt='%-1s')
                 info = name+ ' was succesfully exported'
                 self.statusBar().showMessage(info,5000)
-            except:
+            except Exception as e:
+                print(e)
                 info = 'There was an error exporting ' + name
                 self.statusBar().showMessage(info,5000)
 
