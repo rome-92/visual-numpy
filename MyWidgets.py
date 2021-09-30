@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.2'
+version = '2.1.3'
 
 class MainWindow(QMainWindow):
     
