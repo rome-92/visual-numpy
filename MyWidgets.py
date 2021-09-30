@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         '''Exports file into .csv format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','csv file (*.csv)')
         if name:
-            model = self.view.model().dataContainer
+            model = self.view.model()
             rows = []
             columns = []
             for index in self.view.model().dataContainer.keys():
@@ -519,7 +519,7 @@ class MainWindow(QMainWindow):
             try:
                 for row in range(0,bottomRow+1):
                     for column in range(0,rightColumn+1):
-                        array[row,column] = self.view.model().dataContainer.get((row,column),'')
+                        array[row,column] = model.data(model.index(row,column)).replace(',','')
                 np.savetxt(name,array,delimiter=',',fmt='%-1s')
                 info = name+ ' was succesfully exported'
                 self.statusBar().showMessage(info,5000)
