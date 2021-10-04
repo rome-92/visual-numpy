@@ -114,7 +114,7 @@ class MyModel(QAbstractTableModel):
             for row in range(topLeftRow,bottomRightRow + 1):
                 for column in range(topLeftColumn,bottomRightColumn + 1):
                     self.setData(self.index(row+newRowDifference,column+newColumnDifference),
-                            self.dataContainer[(row,column)],formulaTriggered='ERASE')
+                            self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
                     if action == Qt.MoveAction:
                         if f := self.formulas.get((row,column),None):
                             try:
@@ -127,7 +127,8 @@ class MyModel(QAbstractTableModel):
                                 print(e)
                                 f.addressRow = row
                                 f.addressColumn = column
-                        del self.dataContainer[(row,column)]
+                        try:del self.dataContainer[(row,column)]
+                        except KeyError:pass
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
