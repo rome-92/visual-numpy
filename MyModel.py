@@ -66,10 +66,7 @@ class MyModel(QAbstractTableModel):
         stream = QDataStream(encodedData,QIODevice.WriteOnly)
         rows = []
         columns = []
-        formulas = []
         for index in indexes:
-            if f := self.formulas.get((index.row(),index.column()),None):
-                formulas.append(f)
             rows.append(index.row())
             columns.append(index.column())
         if flag == 'mouse':
@@ -88,8 +85,6 @@ class MyModel(QAbstractTableModel):
         stream.writeString(topLeftIndexColumn)
         stream.writeString(bottomRightIndexRow)
         stream.writeString(bottomRightIndexColumn)
-        for f in formulas:
-            stream.writeString(str(f.addressRow)+','+str(f.addressColumn))
         mimeData.setData('application/octet-stream',encodedData)
         return mimeData
 
@@ -101,7 +96,7 @@ class MyModel(QAbstractTableModel):
             data = []
             while not stream.atEnd():
                 data.append(stream.readString())
-            rowFromData,columnFromData,topLeftRow,topLeftColumn,bottomRightRow,bottomRightColumn = data[:6]
+            rowFromData,columnFromData,topLeftRow,topLeftColumn,bottomRightRow,bottomRightColumn = data
             rowFromData = int(rowFromData)
             columnFromData = int(columnFromData)
             topLeftRow = int(topLeftRow)
@@ -116,9 +111,6 @@ class MyModel(QAbstractTableModel):
             newTopColumn = topLeftColumn + newColumnDifference
             newBottomRow = bottomRightRow + newRowDifference
             newBottomColumn = bottomRightColumn + newColumnDifference
-            if formulas := data[6:]:
-                for i,formula in enumerate(formulas):
-                    formulas[i] = eval(formula)
             for row in range(topLeftRow,bottomRightRow + 1):
                 for column in range(topLeftColumn,bottomRightColumn + 1):
                     self.setData(self.index(row+newRowDifference,column+newColumnDifference),
