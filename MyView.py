@@ -273,7 +273,7 @@ class MyView(QTableView):
                 formulaIndexSet = set(f_.indexes)
                 if domainIndexesSet.intersection(formulaIndexSet):
                     self.circularReferenceCheck(indexesSet,f_)
-            if f_ := self.model().dataContainer.get((resultIndexRow,resultIndexColumn),None):
+            if f_ := self.model().formulas.get((resultIndexRow,resultIndexColumn),None):
                 if f_.text != text:
                     del self.model().formulas[resultIndexRow,resultIndexColumn]
                     self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)

@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.4'
+version = '2.1.5'
 
 class MainWindow(QMainWindow):
     
@@ -831,6 +831,7 @@ class MainWindow(QMainWindow):
         #prepares the command in order to format it                                                    
         commandExecutable = globals_.REGEXP1.sub('{}',text)
         #matches a name with an array and iterates through it
+        idPool = list(idPool)
         for i1,i2 in zip(idPool,numpyArrayList):
             #assigns the actual name to the array
             exec(i1+'= i2')
