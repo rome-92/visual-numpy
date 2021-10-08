@@ -127,8 +127,7 @@ class MyModel(QAbstractTableModel):
                                 print(e)
                                 f.addressRow = row
                                 f.addressColumn = column
-                        try:del self.dataContainer[(row,column)]
-                        except KeyError:pass
+                        self.setData(self.index(row,column),'')
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
@@ -249,7 +248,10 @@ class MyModel(QAbstractTableModel):
         if role == Qt.EditRole:
             if str(value) == self.data(index):
                 return True
-            self.dataContainer[(index.row(),index.column())] = value
+            if value != '':
+                self.dataContainer[(index.row(),index.column())] = value
+            else:
+                del self.dataContainer[index.row(),index.column()]
             try:
                 assert self.formulas
             except AssertionError:
