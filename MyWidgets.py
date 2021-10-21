@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QMainWindow, QLineEdit, QToolBar, QLabel, QFileDi
                                QMessageBox, QFontComboBox, QComboBox, QColorDialog,
                                QPushButton)
 from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFont,
-                           QPixmap,QIcon,QBrush,QColor)
+                           QPixmap,QBrush,QColor)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
 from MyView import MyView
