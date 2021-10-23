@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         loadFile.triggered.connect(self.loadFile)
         importFile = QAction('&Import',self)
         importFile.setShortcut('Ctrl+I')
-        importFile.setStatusTip('Import File to csv')
+        importFile.setStatusTip('Import csv file')
         importFile.triggered.connect(self.importFile)
         thsndsSep = QAction('Thousands separator',self)
         thsndsSep.setStatusTip('Enable/Disable thousands separator')
