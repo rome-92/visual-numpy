@@ -767,7 +767,8 @@ class MainWindow(QMainWindow):
                 <p>Copyright &copy; 2021 Román U. Martínez 
                 <p>Simple spreadsheet application "numpy enabled".
                 <p>License: GNU General Public License v3. 
-                <p>Python {1} - Qt {2} - PySide {3} on {4}""".format(
+                <p>Python {1} - Qt {2} - PySide {3} on {4}
+                <p><a href="https://github.com/rome-92/visual-numpy">github.com/rome-92/visual-numpy</a>""".format(
                 version, platform.python_version(),
                 QT_VERSION, PYSIDE6_VERSION,
                 platform.system()))
