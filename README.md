@@ -32,7 +32,8 @@ As you will see usage of formulas and implementation differs from excel or any o
 
 ## Contributing
 This is a WIP so any contribution is welcome. Currently documentation and bug fixes are number one priority.
-For major changes, please open an issue first to discuss what you would like to change.
+If you plan on actively contributing to the project forking the repo and pushing your patches on their own branches is the best option after which you can send me a pull request either through here or via email with the help of ``` $ git request-pull ```
 
+In the case you are not planning on actively contributing but nevertheless want to help every now and then please send me an email with your patch with the use of ```$ git format-patch```
 ## License
 [GPL v3](https://www.gnu.org/licenses/)
