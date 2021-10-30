@@ -793,23 +793,18 @@ class MainWindow(QMainWindow):
         '''Formats corresponding string into python executable code and evaluates resulting expression'''
         #locates array selection via reg exp
         arrays = globals_.REGEXP1.findall(text)       
-        #stores the 2 element tuples cont. the alphanumeric coords
-        indexes = []
         #stores the 2 element tuples cont. the numeric coords
         coords = []         
-        for array in arrays:
-            topLeft,bottomRight = globals_.REGEXP2.findall(array)
-            indexes.append((topLeft,bottomRight))
-        for index in indexes:
-            limit1 = self.getCoord(index[0])
-            limit2 = self.getCoord(index[1])
-            coords.append((limit1,limit2))
         #stores the actual numpy arrays
         numpyArrayList = []                                                 
-        for limits in coords:
+        for array in arrays:
+            topLeft,bottomRight = globals_.REGEXP2.findall(array)
+            r1,c1 = self.getCoord(topLeft)
+            r2,c2 = self.getCoord(bottomRight)
+            coords.append(((r1,c1),(r2,c2)))
             #gets the rows for start and end coords of array
-            rows = [limits[0][0],limits[1][0]+1]                            
-            columns = [limits[0][1],limits[1][1]+1]
+            rows = [r1,r2+1]                            
+            columns = [c1,c2+1]
             height = rows[1] - rows[0]
             width = columns[1] - columns[0]
             array = np.zeros((height,width),np.complex_)
@@ -842,30 +837,25 @@ class MainWindow(QMainWindow):
         scalars = globals_.REGEXP2.findall(commandExecutable)
         #stores the numeric coordinate of the scalar
         scalarsIndexes = []
+        #stores the string representation of the complex numbers                                        
+        scalarNumbers = []                                  
         for scalar in scalars:
             #adds the coordinate (a tuple containing the row and column coords)
-            scalarsIndexes.append(self.getCoord(scalar))
-        #stores the string representation of the complex numbers                                            
-        scalarNumbers = []                                  
-        for i in scalarsIndexes:
-            row = i[0]
-            column = i[1]
+            r,c = self.getCoord(scalar)
+            scalarsIndexes.append((r,c))
             #gets the string representation of the assumed complex number
-            number = self.view.model().dataContainer.get((row,column),'0')
-            if number != '':
-                #tries to convert to a complex number
-                try:
-                    complex(number)
-                #if there's an error the value is assumed to be a NaN
-                except Exception as e:
-                    #the appropiate error message shows up and returns                                   
-                    print(e,number)                                                                     
-                    return
-            else:
-                number = '0'
+            number = self.view.model().dataContainer.get((r,c),'0')
+            #tries to convert to a complex number
+            try:
+                complex(number)
+            #if there's an error the value is assumed to be a NaN
+            except Exception as e:
+                #the appropiate error message shows up and returns                                   
+                print(e,number)                                                                     
+                return
             #if there's no error the number is appended to scalarNumbers list
             scalarNumbers.append(number)
-        #the command string is prepared by subsitituing first                                                           
+        #the command string is prepared by substituting first                                            
         commandExecutable = globals_.REGEXP2.sub('{}',commandExecutable)
         #the actual scalars are substitued for the {}                                    
         commandExecutable = commandExecutable.format(*scalarNumbers)
