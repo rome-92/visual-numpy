@@ -490,6 +490,14 @@ class MainWindow(QMainWindow):
                     self.view.model().formulas.clear()
                     self.view.model().history.clear()
                     self.view.model().formulas = formulas
+                    rows = (max(v[0] for v in loadedModel.keys()))
+                    columns = (max(v[1] for v in loadedModel.keys()))
+                    currentRows = self.view.model().rowCount()
+                    currentColumns = self.view.model().columnCount()
+                    if (rowsToAdd := (rows + 1) - currentRows) > 0:
+                        self.view.model().insertRows(currentRows,rowsToAdd)
+                    if (columnsToAdd := (columns + 1) - currentColumns) > 0:
+                        self.view.model().insertColumns(currentColumns,columsToAdd)
                     self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
