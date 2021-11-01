@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (QMainWindow, QLineEdit, QToolBar, QLabel, QFileDi
                                QMessageBox, QFontComboBox, QComboBox, QColorDialog,
                                QPushButton)
 from PySide6.QtGui import (QAction, QGuiApplication, QActionGroup, QFont,
-                           QPixmap,QIcon,QBrush,QColor)
+                           QPixmap,QBrush,QColor)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
 from MyView import MyView
@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.6'
+version = '2.1.7'
 
 class MainWindow(QMainWindow):
     
@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         loadFile.triggered.connect(self.loadFile)
         importFile = QAction('&Import',self)
         importFile.setShortcut('Ctrl+I')
-        importFile.setStatusTip('Import File to csv')
+        importFile.setStatusTip('Import csv file')
         importFile.triggered.connect(self.importFile)
         thsndsSep = QAction('Thousands separator',self)
         thsndsSep.setStatusTip('Enable/Disable thousands separator')
@@ -293,6 +293,8 @@ class MainWindow(QMainWindow):
                         for columnNumber,column in enumerate(row):
                             index = self.view.model().createIndex(rowNumber,columnNumber)
                             self.view.model().setData(index,column)
+                    self.view.model().dataChanged.emit(self.view.model().index(0,0),
+                            index)
                 MainWindow.currentFile = name
                 info = name+' was succesfully imported'
                 self.statusBar().showMessage(info,5000)
@@ -490,6 +492,14 @@ class MainWindow(QMainWindow):
                     self.view.model().formulas.clear()
                     self.view.model().history.clear()
                     self.view.model().formulas = formulas
+                    rows = (max(v[0] for v in loadedModel.keys()))
+                    columns = (max(v[1] for v in loadedModel.keys()))
+                    currentRows = self.view.model().rowCount()
+                    currentColumns = self.view.model().columnCount()
+                    if (rowsToAdd := (rows + 1) - currentRows) > 0:
+                        self.view.model().insertRows(currentRows,rowsToAdd)
+                    if (columnsToAdd := (columns + 1) - currentColumns) > 0:
+                        self.view.model().insertColumns(currentColumns,columsToAdd)
                     self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
@@ -767,7 +777,8 @@ class MainWindow(QMainWindow):
                 <p>Copyright &copy; 2021 Román U. Martínez 
                 <p>Simple spreadsheet application "numpy enabled".
                 <p>License: GNU General Public License v3. 
-                <p>Python {1} - Qt {2} - PySide {3} on {4}""".format(
+                <p>Python {1} - Qt {2} - PySide {3} on {4}
+                <p><a href="https://github.com/rome-92/visual-numpy">github.com/rome-92/visual-numpy</a>""".format(
                 version, platform.python_version(),
                 QT_VERSION, PYSIDE6_VERSION,
                 platform.system()))
@@ -792,23 +803,18 @@ class MainWindow(QMainWindow):
         '''Formats corresponding string into python executable code and evaluates resulting expression'''
         #locates array selection via reg exp
         arrays = globals_.REGEXP1.findall(text)       
-        #stores the 2 element tuples cont. the alphanumeric coords
-        indexes = []
         #stores the 2 element tuples cont. the numeric coords
         coords = []         
-        for array in arrays:
-            topLeft,bottomRight = globals_.REGEXP2.findall(array)
-            indexes.append((topLeft,bottomRight))
-        for index in indexes:
-            limit1 = self.getCoord(index[0])
-            limit2 = self.getCoord(index[1])
-            coords.append((limit1,limit2))
         #stores the actual numpy arrays
         numpyArrayList = []                                                 
-        for limits in coords:
+        for array in arrays:
+            topLeft,bottomRight = globals_.REGEXP2.findall(array)
+            r1,c1 = self.getCoord(topLeft)
+            r2,c2 = self.getCoord(bottomRight)
+            coords.append(((r1,c1),(r2,c2)))
             #gets the rows for start and end coords of array
-            rows = [limits[0][0],limits[1][0]+1]                            
-            columns = [limits[0][1],limits[1][1]+1]
+            rows = [r1,r2+1]                            
+            columns = [c1,c2+1]
             height = rows[1] - rows[0]
             width = columns[1] - columns[0]
             array = np.zeros((height,width),np.complex_)
@@ -841,30 +847,25 @@ class MainWindow(QMainWindow):
         scalars = globals_.REGEXP2.findall(commandExecutable)
         #stores the numeric coordinate of the scalar
         scalarsIndexes = []
+        #stores the string representation of the complex numbers                                        
+        scalarNumbers = []                                  
         for scalar in scalars:
             #adds the coordinate (a tuple containing the row and column coords)
-            scalarsIndexes.append(self.getCoord(scalar))
-        #stores the string representation of the complex numbers                                            
-        scalarNumbers = []                                  
-        for i in scalarsIndexes:
-            row = i[0]
-            column = i[1]
+            r,c = self.getCoord(scalar)
+            scalarsIndexes.append((r,c))
             #gets the string representation of the assumed complex number
-            number = self.view.model().dataContainer.get((row,column),'0')
-            if number != '':
-                #tries to convert to a complex number
-                try:
-                    complex(number)
-                #if there's an error the value is assumed to be a NaN
-                except Exception as e:
-                    #the appropiate error message shows up and returns                                   
-                    print(e,number)                                                                     
-                    return
-            else:
-                number = '0'
+            number = self.view.model().dataContainer.get((r,c),'0')
+            #tries to convert to a complex number
+            try:
+                complex(number)
+            #if there's an error the value is assumed to be a NaN
+            except Exception as e:
+                #the appropiate error message shows up and returns                                   
+                print(e,number)                                                                     
+                return
             #if there's no error the number is appended to scalarNumbers list
             scalarNumbers.append(number)
-        #the command string is prepared by subsitituing first                                                           
+        #the command string is prepared by substituting first                                            
         commandExecutable = globals_.REGEXP2.sub('{}',commandExecutable)
         #the actual scalars are substitued for the {}                                    
         commandExecutable = commandExecutable.format(*scalarNumbers)
