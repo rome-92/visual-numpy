@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.6'
+version = '2.1.7'
 
 class MainWindow(QMainWindow):
     
@@ -293,6 +293,8 @@ class MainWindow(QMainWindow):
                         for columnNumber,column in enumerate(row):
                             index = self.view.model().createIndex(rowNumber,columnNumber)
                             self.view.model().setData(index,column)
+                    self.view.model().dataChanged.emit(self.view.model().index(0,0),
+                            index)
                 MainWindow.currentFile = name
                 info = name+' was succesfully imported'
                 self.statusBar().showMessage(info,5000)
