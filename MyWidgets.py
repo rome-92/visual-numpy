@@ -331,6 +331,7 @@ class MainWindow(QMainWindow):
         '''Saves file into .vnp format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','vnp files (*.vnp)')
         if name:
+            name = name.replace('.vnp','')
             model = self.view.model().dataContainer
             alignment = self.view.model().alignmentDict
             fonts = self.view.model().fonts.copy()
@@ -441,6 +442,7 @@ class MainWindow(QMainWindow):
         '''Saves array into .npy array format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save Array','','npy files(*.npy)')
         if name:
+            name = name.replace('.npy','')
             selected = self.view.selectedIndexes()
             rows = []
             columns = []
@@ -516,6 +518,7 @@ class MainWindow(QMainWindow):
         '''Exports file into .csv format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','csv file (*.csv)')
         if name:
+            name = name.replace('.csv','')
             model = self.view.model()
             rows = []
             columns = []
@@ -530,7 +533,7 @@ class MainWindow(QMainWindow):
                 for row in range(0,bottomRow+1):
                     for column in range(0,rightColumn+1):
                         array[row,column] = model.data(model.index(row,column)).replace(',','')
-                np.savetxt(name,array,delimiter=',',fmt='%-1s')
+                np.savetxt(name+'.csv',array,delimiter=',',fmt='%-1s')
                 info = name+ ' was succesfully exported'
                 self.statusBar().showMessage(info,5000)
             except Exception as e:
