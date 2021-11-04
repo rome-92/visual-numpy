@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.7'
+version = '2.1.8'
 
 class MainWindow(QMainWindow):
     
@@ -502,6 +502,8 @@ class MainWindow(QMainWindow):
                         self.view.model().insertRows(currentRows,rowsToAdd)
                     if (columnsToAdd := (columns + 1) - currentColumns) > 0:
                         self.view.model().insertColumns(currentColumns,columsToAdd)
+                    self.view.model().dataChanged.emit(self.view.model().index(0,0),
+                            self.view.model().index(rows,columns))
                     self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
