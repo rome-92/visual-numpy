@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.7'
+version = '2.1.8'
 
 class MainWindow(QMainWindow):
     
@@ -331,6 +331,7 @@ class MainWindow(QMainWindow):
         '''Saves file into .vnp format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','vnp files (*.vnp)')
         if name:
+            name = name.replace('.vnp','')
             model = self.view.model().dataContainer
             alignment = self.view.model().alignmentDict
             fonts = self.view.model().fonts.copy()
@@ -441,6 +442,7 @@ class MainWindow(QMainWindow):
         '''Saves array into .npy array format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save Array','','npy files(*.npy)')
         if name:
+            name = name.replace('.npy','')
             selected = self.view.selectedIndexes()
             rows = []
             columns = []
@@ -500,6 +502,8 @@ class MainWindow(QMainWindow):
                         self.view.model().insertRows(currentRows,rowsToAdd)
                     if (columnsToAdd := (columns + 1) - currentColumns) > 0:
                         self.view.model().insertColumns(currentColumns,columsToAdd)
+                    self.view.model().dataChanged.emit(self.view.model().index(0,0),
+                            self.view.model().index(rows,columns))
                     self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
@@ -516,6 +520,7 @@ class MainWindow(QMainWindow):
         '''Exports file into .csv format'''
         name, notUsed = QFileDialog.getSaveFileName(self,'Save File','','csv file (*.csv)')
         if name:
+            name = name.replace('.csv','')
             model = self.view.model()
             rows = []
             columns = []
@@ -530,7 +535,7 @@ class MainWindow(QMainWindow):
                 for row in range(0,bottomRow+1):
                     for column in range(0,rightColumn+1):
                         array[row,column] = model.data(model.index(row,column)).replace(',','')
-                np.savetxt(name,array,delimiter=',',fmt='%-1s')
+                np.savetxt(name+'.csv',array,delimiter=',',fmt='%-1s')
                 info = name+ ' was succesfully exported'
                 self.statusBar().showMessage(info,5000)
             except Exception as e:
