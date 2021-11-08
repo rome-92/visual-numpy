@@ -18,7 +18,7 @@
 #    along with Visual Numpy.  If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------
 
-from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QSize
+from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QSize, QTimer
 from PySide6.QtWidgets import QTableView, QAbstractItemView, QApplication, QWidget
 from PySide6.QtGui import QAction, QColor, QPainter, QPen, QBrush
 from MyModel import CircularReferenceError
@@ -43,7 +43,9 @@ class MyView(QTableView):
         self.vScrollBar = self.verticalScrollBar()
         self.hScrollBar = self.horizontalScrollBar()
         self.vScrollBar.actionTriggered.connect(self.addRow_)
+        self.vScrollBar.actionTriggered.connect(lambda:QTimer.singleShot(0,self.overlay.createRect))
         self.hScrollBar.actionTriggered.connect(self.addColumn_)
+        self.hScrollBar.actionTriggered.connect(lambda:QTimer.singleShot(0,self.overlay.createRect))
         self.vScrollBar.sliderMoved.connect(self.disableAddRow)
         self.hScrollBar.sliderMoved.connect(self.disableAddColumn)
         self.vScrollBar.sliderReleased.connect(self.enableAddRow)
@@ -452,7 +454,6 @@ class MyView(QTableView):
         else:
             super().keyPressEvent(event)
 
-
     def mouseMoveEvent(self,event):
         '''Tracks mouse position and checks for dragging handles'''
         posX = event.x() + self.verticalHeader().width()
@@ -478,7 +479,7 @@ class MyView(QTableView):
             self.overlay.setGeometry(self.rect())
         except AssertionError:
             pass
-
+    
 class Overlay(QWidget):
     '''Provides visual aesthetic for selections and drag functionality'''
     def __init__(self,parent=None):
