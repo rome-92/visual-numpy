@@ -95,16 +95,17 @@ class MyView(QTableView):
         selectedIndexes = selectionModel.selectedIndexes()
         if not globals_.formula_mode: 
             commandLineEdit = self.parent().commandLineEdit
-            commandLineEdit.currentIndex = self.currentIndex()
             commandLineEdit.clear()
             if len(selectedIndexes) == 1:
+                if selectedIndexes:
+                    commandLineEdit.currentIndex = selectedIndexes[0]
                 for action in self.actions():
                     if action.objectName() == 'merge':
                         action.setDisabled(True)
                 if self.model().domainHighlight:
                     self.model().domainHighlight.clear()
                     globals_.domainHighlight = False
-                index = self.currentIndex()
+                index = selectedIndexes[0]
                 font = self.model().fonts.get((index.row(),index.column()),globals_.defaultFont)
                 size = font.pointSizeF()
                 if size.is_integer():
