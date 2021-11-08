@@ -111,10 +111,12 @@ class MyModel(QAbstractTableModel):
             newTopColumn = topLeftColumn + newColumnDifference
             newBottomRow = bottomRightRow + newRowDifference
             newBottomColumn = bottomRightColumn + newColumnDifference
+            selectionModel = self.parent().selectionModel()
+            selectionModel.clearSelection()
             for row in range(topLeftRow,bottomRightRow + 1):
                 for column in range(topLeftColumn,bottomRightColumn + 1):
-                    self.setData(self.index(row+newRowDifference,column+newColumnDifference),
-                            self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
+                    movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
+                    self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
                     if action == Qt.MoveAction:
                         if f := self.formulas.get((row,column),None):
                             try:
@@ -128,6 +130,7 @@ class MyModel(QAbstractTableModel):
                                 f.addressRow = row
                                 f.addressColumn = column
                         self.setData(self.index(row,column),'')
+                    selectionModel.select(movedIndex,QItemSelectionModel.Select)
             self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
