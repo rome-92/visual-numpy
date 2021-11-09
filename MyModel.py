@@ -96,42 +96,76 @@ class MyModel(QAbstractTableModel):
             data = []
             while not stream.atEnd():
                 data.append(stream.readString())
-            rowFromData,columnFromData,topLeftRow,topLeftColumn,bottomRightRow,bottomRightColumn = data
+            rowFromData,columnFromData,topRow,leftColumn,bottomRow,rightColumn = data
             rowFromData = int(rowFromData)
             columnFromData = int(columnFromData)
-            topLeftRow = int(topLeftRow)
-            topLeftColumn = int(topLeftColumn)
-            bottomRightRow = int(bottomRightRow)
-            bottomRightColumn = int(bottomRightColumn)
+            topRow = int(topRow)
+            leftColumn = int(leftColumn)
+            bottomRow = int(bottomRow)
+            rightColumn = int(rightColumn)
             dropRow = parent.row()
             dropColumn = parent.column()
             newRowDifference = dropRow - rowFromData
             newColumnDifference = dropColumn - columnFromData
-            newTopRow = topLeftRow + newRowDifference
-            newTopColumn = topLeftColumn + newColumnDifference
-            newBottomRow = bottomRightRow + newRowDifference
-            newBottomColumn = bottomRightColumn + newColumnDifference
+            newTopRow = topRow + newRowDifference
+            newTopColumn = leftColumn + newColumnDifference
+            newBottomRow = bottomRow + newRowDifference
+            newBottomColumn = rightColumn + newColumnDifference
             selectionModel = self.parent().selectionModel()
             selectionModel.clearSelection()
-            for row in range(topLeftRow,bottomRightRow + 1):
-                for column in range(topLeftColumn,bottomRightColumn + 1):
-                    movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
-                    self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
-                    if action == Qt.MoveAction:
-                        if f := self.formulas.get((row,column),None):
-                            try:
-                                self.checkForCircularRef(f,newRowDifference,newColumnDifference)
-                                f.addressRow = f.addressRow + newRowDifference
-                                f.addressColumn = f.addressColumn + newColumnDifference
-                                self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                                del self.formulas[row,column]
-                            except Exception as e:
-                                print(e)
-                                f.addressRow = row
-                                f.addressColumn = column
-                        self.setData(self.index(row,column),'')
-                    selectionModel.select(movedIndex,QItemSelectionModel.Select)
-            self.dataChanged.emit(self.index(topLeftRow,topLeftColumn),self.index(newBottomRow,newBottomColumn))
+            if newRowDifference > 0:
+                if newRowDifference >= (bottomRow - topRow + 1):
+                    passRowCheck = True
+                else:
+                    passRowCheck = False
+            else:
+                passRowCheck = True
+            if newColumnDifference > 0:
+                if newColumnDifference >= (rightColumn - leftColumn + 1):
+                    passColumnCheck = True
+                else:
+                    passColumnCheck = False
+            else:
+                passColumnCheck = True
+            if passRowCheck and passColumnCheck:
+                for row in range(topRow,bottomRow + 1):
+                    for column in range(leftColumn,rightColumn + 1):
+                        movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
+                        self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
+                        if action == Qt.MoveAction:
+                            if f := self.formulas.get((row,column),None):
+                                try:
+                                    self.checkForCircularRef(f,newRowDifference,newColumnDifference)
+                                    f.addressRow = f.addressRow + newRowDifference
+                                    f.addressColumn = f.addressColumn + newColumnDifference
+                                    self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
+                                    del self.formulas[row,column]
+                                except Exception as e:
+                                    print(e)
+                                    f.addressRow = row
+                                    f.addressColumn = column
+                            self.setData(self.index(row,column),'')
+                        selectionModel.select(movedIndex,QItemSelectionModel.Select)
+            else:
+                for row in range(bottomRow, topRow - 1, -1):
+                    for column in range(rightColumn, leftColumn -1, -1):
+                        movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
+                        self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
+                        if action == Qt.MoveAction:
+                            if f := self.formulas.get((row,column),None):
+                                try:
+                                    self.checkForCircularRef(f,newRowDifference,newColumnDifference)
+                                    f.addressRow = f.addressRow + newRowDifference
+                                    f.addressColumn = f.addressColumn + newColumnDifference
+                                    self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
+                                    del self.formulas[row,column]
+                                except Exception as e:
+                                    print(e)
+                                    f.addressRow = row
+                                    f.addressColumn = column
+                            self.setData(self.index(row,column),'')
+                        selectionModel.select(movedIndex,QItemSelectionModel.Select)
+            self.dataChanged.emit(self.index(topRow,leftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
     def checkForCircularRef(self,formula,*deltas):
