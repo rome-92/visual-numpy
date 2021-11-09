@@ -99,8 +99,7 @@ class MyView(QTableView):
             commandLineEdit = self.parent().commandLineEdit
             commandLineEdit.clear()
             if len(selectedIndexes) == 1:
-                if selectedIndexes:
-                    commandLineEdit.currentIndex = selectedIndexes[0]
+                commandLineEdit.currentIndex = selectedIndexes[0]
                 for action in self.actions():
                     if action.objectName() == 'merge':
                         action.setDisabled(True)
