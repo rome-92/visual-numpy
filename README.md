@@ -1,5 +1,5 @@
 # visual-numpy
-Visual Numpy is a WIP spreadsheet application intended to make use of the relatively simple python syntax and the numpy library as well by evaluating a python expression and returning it into the appropriate cell or cells. The name "Visual Numpy" comes from its capability of evaluating an expression that returns a numpy array and present it either as a column (for one dimensional arrays) or a series of contiguous columns (for two dimensional arrays) making it easy and intuitive to use arrays into an "excel like" interface.
+Visual Numpy is a spreadsheet application under constant development intended to make use of the relatively simple python syntax and the numpy library as well by evaluating a python expression and returning it into the appropriate cell or cells. The name "Visual Numpy" comes from its capability of evaluating an expression that returns a numpy array and present it either as a column (for one dimensional arrays) or a series of contiguous columns (for two dimensional arrays) making it easy and intuitive to use arrays into an "excel like" interface.
 
 Visual Numpy is a 100% python based application using the PySide6 library which is the official supported binding for the Qt library.
 
