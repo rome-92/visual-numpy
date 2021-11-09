@@ -113,6 +113,7 @@ class MyModel(QAbstractTableModel):
             newBottomColumn = rightColumn + newColumnDifference
             selectionModel = self.parent().selectionModel()
             selectionModel.clearSelection()
+            self.formulaSnap = list(self.formulas.values())
             if newRowDifference > 0:
                 if newRowDifference >= (bottomRow - topRow + 1):
                     passRowCheck = True
@@ -139,12 +140,11 @@ class MyModel(QAbstractTableModel):
                                     f.addressRow = f.addressRow + newRowDifference
                                     f.addressColumn = f.addressColumn + newColumnDifference
                                     self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                                    del self.formulas[row,column]
                                 except Exception as e:
                                     print(e)
                                     f.addressRow = row
                                     f.addressColumn = column
-                            self.setData(self.index(row,column),'')
+                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
                         selectionModel.select(movedIndex,QItemSelectionModel.Select)
             else:
                 for row in range(bottomRow, topRow - 1, -1):
@@ -158,13 +158,13 @@ class MyModel(QAbstractTableModel):
                                     f.addressRow = f.addressRow + newRowDifference
                                     f.addressColumn = f.addressColumn + newColumnDifference
                                     self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                                    del self.formulas[row,column]
                                 except Exception as e:
                                     print(e)
                                     f.addressRow = row
                                     f.addressColumn = column
-                            self.setData(self.index(row,column),'')
+                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
                         selectionModel.select(movedIndex,QItemSelectionModel.Select)
+            self.updateModel_()
             self.dataChanged.emit(self.index(topRow,leftColumn),self.index(newBottomRow,newBottomColumn))
             return True
 
