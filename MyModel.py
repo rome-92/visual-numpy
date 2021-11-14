@@ -116,54 +116,47 @@ class MyModel(QAbstractTableModel):
             self.formulaSnap = list(self.formulas.values())
             if newRowDifference > 0:
                 if newRowDifference >= (bottomRow - topRow + 1):
-                    passRowCheck = True
+                    beginRow = topRow
+                    endRow = bottomRow + 1
+                    stepRow = 1
                 else:
-                    passRowCheck = False
+                    beginRow = bottomRow
+                    endRow = topRow - 1
+                    stepRow = -1
             else:
-                passRowCheck = True
+                beginRow = topRow
+                endRow = bottomRow + 1
+                stepRow = 1
             if newColumnDifference > 0:
                 if newColumnDifference >= (rightColumn - leftColumn + 1):
-                    passColumnCheck = True
+                    beginColumn = leftColumn
+                    endColumn = rightColumn + 1
+                    stepColumn = 1
                 else:
-                    passColumnCheck = False
+                    beginColumn = rightColumn
+                    endColumn = leftColumn -1
+                    stepColumn = -1
             else:
-                passColumnCheck = True
-            if passRowCheck and passColumnCheck:
-                for row in range(topRow,bottomRow + 1):
-                    for column in range(leftColumn,rightColumn + 1):
-                        movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
-                        self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
-                        if action == Qt.MoveAction:
-                            if f := self.formulas.get((row,column),None):
-                                try:
-                                    self.checkForCircularRef(f,newRowDifference,newColumnDifference)
-                                    f.addressRow = f.addressRow + newRowDifference
-                                    f.addressColumn = f.addressColumn + newColumnDifference
-                                    self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                                except Exception as e:
-                                    print(e)
-                                    f.addressRow = row
-                                    f.addressColumn = column
-                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
-                        selectionModel.select(movedIndex,QItemSelectionModel.Select)
-            else:
-                for row in range(bottomRow, topRow - 1, -1):
-                    for column in range(rightColumn, leftColumn -1, -1):
-                        movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
-                        self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
-                        if action == Qt.MoveAction:
-                            if f := self.formulas.get((row,column),None):
-                                try:
-                                    self.checkForCircularRef(f,newRowDifference,newColumnDifference)
-                                    f.addressRow = f.addressRow + newRowDifference
-                                    f.addressColumn = f.addressColumn + newColumnDifference
-                                    self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
-                                except Exception as e:
-                                    print(e)
-                                    f.addressRow = row
-                                    f.addressColumn = column
-                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
-                        selectionModel.select(movedIndex,QItemSelectionModel.Select)
+                beginColumn = leftColumn
+                endColumn = rightColumn + 1
+                stepColumn = 1
+            for row in range(beginRow,endRow,stepRow):
+                for column in range(beginColumn,endColumn,stepColumn):
+                    movedIndex = self.index(row+newRowDifference,column+newColumnDifference)
+                    self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
+                    if action == Qt.MoveAction:
+                        if f := self.formulas.get((row,column),None):
+                            try:
+                                self.checkForCircularRef(f,newRowDifference,newColumnDifference)
+                                f.addressRow = f.addressRow + newRowDifference
+                                f.addressColumn = f.addressColumn + newColumnDifference
+                                self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
+                            except Exception as e:
+                                print(e)
+                                f.addressRow = row
+                                f.addressColumn = column
+                        self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
+                    selectionModel.select(movedIndex,QItemSelectionModel.Select)
             self.updateModel_()
             self.dataChanged.emit(self.index(topRow,leftColumn),self.index(newBottomRow,newBottomColumn))
             return True
