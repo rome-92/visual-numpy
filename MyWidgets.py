@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.10'
+version = '2.1.11'
 
 class MainWindow(QMainWindow):
     
@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
         self.view.model().formulas.clear()
         self.view.model().alignmentDict.clear()
         self.view.model().fonts.clear()
-        self.viewl.model().foreground.clear()
+        self.view.model().foreground.clear()
         self.view.model().background.clear()
         self.view.model().history.clear()
         self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
