@@ -332,6 +332,15 @@ class MyModel(QAbstractTableModel):
                 return True
             if formulaTriggered == 'ERASE':
                 if f := self.formulas.get((index.row(),index.column()),None):
+                    for currentFs in self.formulas.values():
+                        try:
+                            currentFs.precedence.remove(f)
+                        except KeyError:
+                            pass
+                        try:
+                            currentFs.subsequent.remove(f)
+                        except KeyError:
+                            pass
                     del self.formulas[index.row(),index.column()]
                 for f in self.formulaSnap.copy():
                     for i in f.indexes:
@@ -340,12 +349,7 @@ class MyModel(QAbstractTableModel):
                             self.formulaSnap.remove(f)
                             break
             elif formulaTriggered == True:
-                for f in self.formulaSnap.copy():
-                    for i in f.indexes:
-                        if index.row() == i[0] and index.column() == i[1]:
-                            self.ftoapply.append(f)
-                            self.formulaSnap.remove(f)
-                            break
+                pass
             elif formulaTriggered == False:
                 if f := self.formulas.get((index.row(),index.column()),None):
                     del self.formulas[index.row(),index.column()]
@@ -354,7 +358,12 @@ class MyModel(QAbstractTableModel):
                         if index.row() == i[0] and index.column() == i[1]:
                             self.ftoapply.append(f)
                             break
-                self.updateModel_()
+                self.parent().parent().addAllPrecedences(self.ftoapply)
+                self.parent().parent().executeOrderResolutor(self.ftoapply)
+                self.ftoapply.clear()
+                self.allPrecedences.clear()
+                self.applied.clear()
+                self.appliedStatic.clear()
             return True
         elif role == Qt.BackgroundRole:
             if globals_.formula_mode:
