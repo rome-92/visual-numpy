@@ -457,7 +457,15 @@ class MyView(QTableView):
                 rows.append(selIndex.row())
                 columns.append(selIndex.column())
             if self.model().ftoapply:
-                self.model().updateModel_()
+                setOf = set(self.model().ftoapply)
+                setOf2 = set(self.model().formulas.values())
+                f_s = setOf.intersection(setOf2)
+                self.parent().addAllPrecedences(f_s)
+                self.parent().executeOrderResolutor(f_s)
+                self.model().allPrecedences.clear()
+                self.model().applied.clear()
+                self.model().appliedStatic.clear()
+                self.model().ftoapply.clear()
             minRow = min(rows)
             minColumn = min(columns)
             maxRow = max(rows)
@@ -479,12 +487,24 @@ class MyView(QTableView):
                     for ind in selected[1:]:
                         self.model().setData(ind,data2copy,formulaTriggered='ERASE')
                     if self.model().ftoapply:
-                        self.model().updateModel_()
+                        setOf = set(self.model().ftoapply)
+                        setOf2 = set(self.model().formulas.values())
+                        f_s = setOf.intersection(setOf2)
+                        self.parent().addAllPrecedences(f_s)
+                        self.parent().executeOrderResolutor(f_s)
+                        self.model().allPrecedences.clear()
+                        self.model().applied.clear()
+                        self.model().appliedStatic.clear()
+                        self.model().ftoapply.clear()
                     self.model().dataChanged.emit(selected[0],selected[-1])
             else:
                 super().keyPressEvent(event)
+        elif event.key() == Qt.Key_F6:
+            for f in self.model().formulas.values():
+                print(f,f.precedence,f.subsequent)
         else:
             super().keyPressEvent(event)
+        self.model().formulaSnap.clear()
 
     def mouseMoveEvent(self,event):
         '''Tracks mouse position and checks for dragging handles'''
