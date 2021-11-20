@@ -981,6 +981,7 @@ class MainWindow(QMainWindow):
         self.view.setFocus()
 
     def executeOrderResolutor(self,formulas):
+        '''Defines the order and executes formulas that require recalculation'''
         for f in formulas:
             self.view.model().applied.update(f.subsequent)
             self.view.model().applied.difference_update(self.view.model().allPrecedences)
@@ -992,6 +993,7 @@ class MainWindow(QMainWindow):
                     self.executeOrderResolutor(f.precedence)
 
     def addAllPrecedences(self,formulas):
+        '''Populates allPrecedences set with appropiate values'''
         for p in formulas:
             self.addAllPrecedences(p.precedence)
         self.view.model().allPrecedences.update(formulas)
