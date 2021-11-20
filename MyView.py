@@ -312,17 +312,22 @@ class MyView(QTableView):
         else:
             self.model().formulas[resultIndexRow,resultIndexColumn] = possibleF
 
-    def circularReferenceCheck(self,subject,match):
+    def circularReferenceCheck(self,precedence,possibleF):
         '''Checks for possible circular references which are not allowed by design'''
-        formulaDomainSet = set(match.domain)
-        if formulaDomainSet.intersection(subject):
-            index = self.parent().commandLineEdit.currentIndex
-            raise CircularReferenceError(index.row(),index.column())
+        if possibleF in precedence:
+            for currentFs in self.model().formulas.values():
+                try:
+                    currentFs.precedence.remove(possibleF)
+                except KeyError:
+                    pass
+                try:
+                    currentFs.subsequent.remove(possibleF)
+                except KeyError:
+                    pass
+            raise CircularReferenceError(possibleF.addressRow,possibleF.addressColumn)
         else:
-            for f in self.model().formulas.values():
-                formulaIndexSet = set(f.indexes)
-                if formulaDomainSet.intersection(formulaIndexSet):
-                    self.circularReferenceCheck(subject,f)
+            for f in precedence:
+                self.circularReferenceCheck(f.precedence,possibleF)
 
     def startDrag(self,supportedActions):
         '''Begins dragging operation'''
