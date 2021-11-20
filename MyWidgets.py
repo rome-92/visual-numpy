@@ -807,6 +807,7 @@ class MainWindow(QMainWindow):
     def calculate(self,text,*resultIndex,flag=False):
         '''Formats corresponding string into python executable code and evaluates resulting expression'''
         #locates array selection via reg exp
+        print(text)
         arrays = globals_.REGEXP1.findall(text)       
         #stores the 2 element tuples cont. the numeric coords
         coords = []         
@@ -889,7 +890,6 @@ class MainWindow(QMainWindow):
         if type(result) is np.ndarray:
             resultIndexRow = resultIndex[0]
             resultIndexColumn = resultIndex[1]
-            self.view.model().formulaSnap = list(self.view.model().formulas.values())
             if len(result.shape) == 2:
                 #gets the shape of the result
                 resultRows = result.shape[0]
@@ -962,16 +962,23 @@ class MainWindow(QMainWindow):
                     return
             startIndex = self.view.model().createIndex(resultIndexRow,resultIndexColumn)
             endIndex = startIndex
-            self.view.model().formulaSnap = list(self.view.model().formulas.values())
             self.view.model().setData(startIndex,globals_.currentFont,role=Qt.FontRole)
             self.view.model().setData(startIndex,result,formulaTriggered=True)
             self.view.model().dataChanged.emit(startIndex,endIndex)
             self.commandLineEdit.clearFocus()
+
+        currentFormula = self.view.model().formulas[resultIndex[0],resultIndex[1]]
         if not flag:
-            if self.view.model().ftoapply:
-                self.view.model().updateModel_()
+            self.addAllPrecedences(currentFormula.precedence)
+            self.executeOrderResolutor(currentFormula.precedence)
+            self.view.model().ftoapply.clear()
+            self.view.model().applied.clear()
+            self.view.model().appliedStatic.clear()
+            self.view.model().allPrecedences.clear()
+            self.view.saveToHistory()
+        else:
+            self.view.saveToHistory()
         self.view.setFocus()
-        self.view.saveToHistory()
 
 
 
