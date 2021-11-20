@@ -980,6 +980,21 @@ class MainWindow(QMainWindow):
             self.view.saveToHistory()
         self.view.setFocus()
 
+    def executeOrderResolutor(self,formulas):
+        for f in formulas:
+            self.view.model().applied.update(f.subsequent)
+            self.view.model().applied.difference_update(self.view.model().allPrecedences)
+            self.view.model().applied.update(self.view.model().appliedStatic)
+            if not f.subsequent.difference(self.view.model().applied):
+                if f not in self.view.model().appliedStatic:
+                    self.calculate(f.text,f.addressRow,f.addressColumn,flag=True)
+                    self.view.model().appliedStatic.add(f)
+                    self.executeOrderResolutor(f.precedence)
+
+    def addAllPrecedences(self,formulas):
+        for p in formulas:
+            self.addAllPrecedences(p.precedence)
+        self.view.model().allPrecedences.update(formulas)
 
 
 class CommandLineEdit(QLineEdit):
