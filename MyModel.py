@@ -35,6 +35,9 @@ class MyModel(QAbstractTableModel):
         self.columns = 52
         self.formulas = {}
         self.ftoapply = []
+        self.applied = set()
+        self.allPrecedences= set()
+        self.appliedStatic = set()
         self.formulaSnap = []
         self.highlight = None
         self.domainHighlight = {}
