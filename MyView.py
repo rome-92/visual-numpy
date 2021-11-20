@@ -247,6 +247,8 @@ class MyView(QTableView):
     def createFormula(self,text,arrayRanges,scalars,domain):
         '''Checks for formula integrity and calls the formula constructor'''
         indexes = []
+        precedence = set()
+        subsequent = set()
         for array in arrayRanges:
             rowLimit1 = array[0][0]
             rowLimit2 = array[1][0]+1
@@ -266,6 +268,7 @@ class MyView(QTableView):
         for row in range(resultIndexRow,resultIndexRow+resultRows):
             for column in range(resultIndexColumn,resultIndexColumn+resultColumns):
                 domainIndexes.append((row,column))
+        possibleF = Formula(text,address,indexes,domainIndexes,precedence,subsequent)
         indexesSet = set(indexes)
         domainIndexesSet = set(domainIndexes)
         if indexesSet.intersection(domainIndexesSet):
@@ -273,16 +276,41 @@ class MyView(QTableView):
         if self.model().formulas:
             for f_ in self.model().formulas.values():
                 formulaIndexSet = set(f_.indexes)
+                formulaDomainSet = set(f_.domain)
                 if domainIndexesSet.intersection(formulaIndexSet):
-                    self.circularReferenceCheck(indexesSet,f_)
+                    possibleF.precedence.add(f_)
+                    f_.subsequent.add(possibleF)
+                if indexesSet.intersection(formulaDomainSet):
+                    possibleF.subsequent.add(f_)
+                    f_.precedence.add(possibleF)
+                if possibleF.precedence.intersection(possibleF.subsequent):
+                    for currentFs in self.model().formulas.values():
+                        try:
+                            currentFs.precedence.remove(possibleF)
+                        except KeyError:
+                            pass
+                        try:
+                            currentFs.subsequent.remove(possibleF)
+                        except KeyError:
+                            pass
+                    raise CircularReferenceError(resultIndexRow,resultIndexColumn)
+            self.circularReferenceCheck(possibleF.precedence,possibleF)
             if f_ := self.model().formulas.get((resultIndexRow,resultIndexColumn),None):
                 if f_.text != text:
-                    del self.model().formulas[resultIndexRow,resultIndexColumn]
-                    self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+                    for currentFs in self.model().formulas.values():
+                        try:
+                            currentFs.precedence.remove(f_)
+                        except KeyError:
+                            pass
+                        try:
+                            currentFs.subsequent.remove(f_)
+                        except KeyError:
+                            pass
+                    self.model().formulas[resultIndexRow,resultIndexColumn] = possibleF
             else:
-                self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+                self.model().formulas[resultIndexRow,resultIndexColumn] = possibleF
         else:
-            self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+            self.model().formulas[resultIndexRow,resultIndexColumn] = possibleF
 
     def circularReferenceCheck(self,subject,match):
         '''Checks for possible circular references which are not allowed by design'''
