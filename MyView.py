@@ -611,10 +611,15 @@ class Overlay(QWidget):
             painter.end()
 
 class Formula():
-    def __init__(self,text,address,indexes,domain):
+    def __init__(self,text,address,indexes,domain,precedence,subsequent):
         '''Constructor params: text->str, address->tuple, indexes->list, domain->list'''
         self.text = text
         self.addressRow = address[0]
         self.addressColumn = address[1]
         self.indexes = indexes
         self.domain = domain
+        self.precedence = precedence
+        self.subsequent = subsequent
+
+    def __repr__(self):
+        return self.text
