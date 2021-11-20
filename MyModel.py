@@ -149,19 +149,51 @@ class MyModel(QAbstractTableModel):
                     self.setData(movedIndex,self.dataContainer.get((row,column),''),formulaTriggered='ERASE')
                     if action == Qt.MoveAction:
                         if f := self.formulas.get((row,column),None):
+                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
                             try:
                                 self.checkForCircularRef(f,newRowDifference,newColumnDifference)
-                                f.addressRow = f.addressRow + newRowDifference
-                                f.addressColumn = f.addressColumn + newColumnDifference
-                                self.formulas[(row+newRowDifference,column+newColumnDifference)] = f
                             except Exception as e:
                                 print(e)
-                                f.addressRow = row
-                                f.addressColumn = column
-                        self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
+                                for f_ in self.formulas.values():
+                                    try:
+                                        f_.precedence.remove(f)
+                                    except KeyError:
+                                        pass
+                                    try:
+                                        f_.subsequent.remove(f)
+                                    except KeyError:
+                                        pass
+                                f.precedence.clear()
+                                f.subsequent.clear()
+                                formulaIndexesSet = set(f.indexes)
+                                formulaDomainSet = set(f.domain)
+                                for f_ in self.formulas.values():
+                                    f_Domain = set(f_.domain)
+                                    f_Indexes = set(f_.indexes)
+                                    if formulaDomainSet.intersection(f_Indexes):
+                                        f.precedence.add(f_)
+                                        f_.subsequent.add(f)
+                                    if formulaIndexesSet.intersection(f_Domain):
+                                        f_.precedence.add(f)
+                                        f.subsequent.add(f_)
+                                self.formulas[f.addressRow,f.addressColumn] = f
+                            else: 
+                                self.formulas[f.addressRow,f.addressColumn] = f
+                        else:
+                            self.setData(self.index(row,column),'',formulaTriggered = 'ERASE')
                     selectionModel.select(movedIndex,QItemSelectionModel.Select)
-            self.updateModel_()
+            if self.ftoapply:
+                setOf = set(self.ftoapply)
+                setOf2 = set(self.formulas.values())
+                f_s = setOf.intersection(setOf2)
+                self.parent().parent().addAllPrecedences(f_s)
+                self.parent().parent().executeOrderResolutor(f_s)
+                self.allPrecedences.clear()
+                self.applied.clear()
+                self.appliedStatic.clear()
+                self.ftoapply.clear()
             self.dataChanged.emit(self.index(topRow,leftColumn),self.index(newBottomRow,newBottomColumn))
+            self.formulaSnap.clear()
             return True
 
     def checkForCircularRef(self,formula,*deltas):
