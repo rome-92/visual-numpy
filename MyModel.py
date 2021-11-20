@@ -220,14 +220,23 @@ class MyModel(QAbstractTableModel):
         newDomainSet = set(newDomain)
         if formulaIndexesSet.intersection(newDomainSet):
             raise CircularReferenceError(formula.addressRow,formula.addressColumn)
+        formula.precedence.clear()
+        formula.subsequent.clear()
+        for f_ in self.formulas.values():
+            f_Domain = set(f_.domain)
+            f_Indexes = set(f_.indexes)
+            if newDomainSet.intersection(f_Indexes):
+                formula.precedence.add(f_)
+                f_.subsequent.add(formula)
+            if formulaIndexesSet.intersection(f_Domain):
+                f_.precedence.add(formula)
+                formula.subsequent.add(f_)
+        if formula.precedence.intersection(formula.subsequent):
+            raise CircularReferenceError(formula.addressRow,formula.addressColumn)
+        self.parent().circularReferenceCheck(formula.precedence,formula)
         formula.domain = newDomain
-
-    def updateModel_(self):
-        '''Executes formulas if any are pending of updating'''
-        for f in self.ftoapply:
-            if f in self.formulas.values():
-                self.parent().parent().calculate(f.text,f.addressRow,f.addressColumn,flag=True)
-        self.ftoapply.clear()
+        formula.addressRow = formula.addressRow + newRowDifference
+        formula.addressColumn = formula.addressColumn + newColumnDifference
 
     def columnCount(self,parent=QModelIndex()):
         return self.columns
