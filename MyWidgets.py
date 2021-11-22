@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '3.0.0-alpha'
+version = '3.0.0-alpha.1'
 
 class MainWindow(QMainWindow):
     
@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
         self.view.model().foreground.clear()
         self.view.model().background.clear()
         self.view.model().history.clear()
-        self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+        self.view.model().history.append((self.view.model().dataContainer.copy(),
                 copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                 self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                 self.view.model().background.copy()))
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
                     self.view.model().foreground.clear()
                     self.view.model().background.clear()
                     self.view.model().history.clear()
-                    self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
@@ -298,6 +298,7 @@ class MainWindow(QMainWindow):
                 MainWindow.currentFile = name
                 info = name+' was succesfully imported'
                 self.statusBar().showMessage(info,5000)
+                self.view.saveToHistory()
             except Exception as e:
                 print(e)
                 info = 'There was an error importing '+name
@@ -504,13 +505,14 @@ class MainWindow(QMainWindow):
                         self.view.model().insertColumns(currentColumns,columsToAdd)
                     self.view.model().dataChanged.emit(self.view.model().index(0,0),
                             self.view.model().index(rows,columns))
-                    self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
                 MainWindow.currentFile = name
                 info = name+ ' was succesfully loaded'
                 self.statusBar().showMessage(info,5000)
+                self.view.saveToHistory()
             except Exception as e:
                 print(e)
                 info = 'There was an error loading '+name
