@@ -355,7 +355,7 @@ class MyView(QTableView):
         '''Saves current model and formulas state up to 5 instances'''
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
-        data = copy.deepcopy(self.model().dataContainer)
+        data = self.model().dataContainer.copy()
         formulas = copy.deepcopy(self.model().formulas)
         align = self.model().alignmentDict.copy()
         fonts = self.model().fonts.copy()
@@ -377,7 +377,7 @@ class MyView(QTableView):
         foreground = model[4]
         background = model[5]
         self.model().formulas = copy.deepcopy(formulas)
-        self.model().dataContainer = copy.deepcopy(data)
+        self.model().dataContainer = data.copy()
         self.model().alignmentDict = alignments.copy()
         self.model().fonts = fonts.copy()
         self.model().foreground = foreground.copy()
@@ -399,7 +399,7 @@ class MyView(QTableView):
         foreground = model[4]
         background = model[5]
         self.model().formulas = copy.deepcopy(formulas)
-        self.model().dataContainer = copy.deepcopy(data)
+        self.model().dataContainer = data.copy()
         self.model().alignmentDict = alignments.copy()
         self.model().fonts = fonts.copy()
         self.model().foreground = foreground.copy()

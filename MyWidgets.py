@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
         self.view.model().foreground.clear()
         self.view.model().background.clear()
         self.view.model().history.clear()
-        self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+        self.view.model().history.append((self.view.model().dataContainer.copy(),
                 copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                 self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                 self.view.model().background.copy()))
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
                     self.view.model().foreground.clear()
                     self.view.model().background.clear()
                     self.view.model().history.clear()
-                    self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
@@ -504,7 +504,7 @@ class MainWindow(QMainWindow):
                         self.view.model().insertColumns(currentColumns,columsToAdd)
                     self.view.model().dataChanged.emit(self.view.model().index(0,0),
                             self.view.model().index(rows,columns))
-                    self.view.model().history.append((copy.deepcopy(self.view.model().dataContainer),
+                    self.view.model().history.append((self.view.model().dataContainer.copy(),
                             copy.deepcopy(self.view.model().formulas),self.view.model().alignmentDict.copy(),
                             self.view.model().fonts.copy(),self.view.model().foreground.copy(),
                             self.view.model().background.copy()))
