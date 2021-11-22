@@ -358,12 +358,13 @@ class MyModel(QAbstractTableModel):
                         if index.row() == i[0] and index.column() == i[1]:
                             self.ftoapply.append(f)
                             break
-                self.parent().parent().addAllPrecedences(self.ftoapply)
-                self.parent().parent().executeOrderResolutor(self.ftoapply)
-                self.ftoapply.clear()
-                self.allPrecedences.clear()
-                self.applied.clear()
-                self.appliedStatic.clear()
+                if self.ftoapply:
+                    self.parent().parent().addAllPrecedences(self.ftoapply)
+                    self.parent().parent().executeOrderResolutor(self.ftoapply)
+                    self.ftoapply.clear()
+                    self.allPrecedences.clear()
+                    self.applied.clear()
+                    self.appliedStatic.clear()
             return True
         elif role == Qt.BackgroundRole:
             if globals_.formula_mode:
