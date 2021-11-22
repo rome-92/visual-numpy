@@ -447,6 +447,7 @@ class MyView(QTableView):
                         self.model().setData(ind,data2copy,formulaTriggered='ERASE')
                     if self.model().ftoapply:
                         self.model().updateModel_()
+                    self.saveToHistory()
                     self.model().dataChanged.emit(selected[0],selected[-1])
             else:
                 super().keyPressEvent(event)

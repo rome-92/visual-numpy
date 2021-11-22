@@ -37,7 +37,7 @@ import traceback,random,csv,pickle
 import numpy as np
 import copy
 
-version = '2.1.11'
+version = '2.1.12'
 
 class MainWindow(QMainWindow):
     
@@ -298,6 +298,7 @@ class MainWindow(QMainWindow):
                 MainWindow.currentFile = name
                 info = name+' was succesfully imported'
                 self.statusBar().showMessage(info,5000)
+                self.view.saveToHistory()
             except Exception as e:
                 print(e)
                 info = 'There was an error importing '+name
@@ -511,6 +512,7 @@ class MainWindow(QMainWindow):
                 MainWindow.currentFile = name
                 info = name+ ' was succesfully loaded'
                 self.statusBar().showMessage(info,5000)
+                self.view.saveToHistory()
             except Exception as e:
                 print(e)
                 info = 'There was an error loading '+name
