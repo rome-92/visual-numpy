@@ -530,14 +530,15 @@ class MainWindow(QMainWindow):
                 info = name + ' was succesfully saved'
                 self.statusBar().showMessage(info, 5000)
 
-    def loadFile(self):
+    def loadFile(self, file=None):
         """Load .vnp format"""
-        name, notUsed = QFileDialog.getOpenFileName(
-            self,
-            'Load File',
-            '',
-            'vnp files (*.vnp)'
-            )
+        if not file:
+            name, notUsed = QFileDialog.getOpenFileName(
+                self, 'Load File',
+                '', 'vnp files (*.vnp)'
+                )
+        else:
+            name = file
         if name:
             try:
                 with open(name, 'rb') as myFile:
