@@ -18,11 +18,11 @@
 #    along with Visual Numpy.  If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------
 
-from PySide6.QtWidgets import QApplication
-from MyWidgets import MainWindow
 import sys
 
+from PySide6.QtWidgets import QApplication
 
+from MyWidgets import MainWindow
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

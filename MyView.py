@@ -18,17 +18,20 @@
 #    along with Visual Numpy.  If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------
 
+import copy
+
 from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QSize, QTimer
-from PySide6.QtWidgets import QTableView, QAbstractItemView, QApplication, QWidget
-from PySide6.QtGui import QAction, QColor, QPainter, QPen, QBrush
+from PySide6.QtWidgets import (
+    QTableView, QAbstractItemView, QApplication, QWidget)
+from PySide6.QtGui import QColor, QPainter, QPen, QBrush
+
 from MyModel import CircularReferenceError
 import globals_
-import copy
 
 
 class MyView(QTableView):
-    def __init__(self,parent=None):
-        '''Initialization of parameters and actions for context menu'''
+    def __init__(self, parent=None):
+        """Initialization of parameters and actions for context menu"""
         super().__init__(parent)
         self.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.overlay = Overlay(self)
@@ -43,26 +46,38 @@ class MyView(QTableView):
         self.vScrollBar = self.verticalScrollBar()
         self.hScrollBar = self.horizontalScrollBar()
         self.vScrollBar.actionTriggered.connect(self.addRow_)
-        self.vScrollBar.actionTriggered.connect(lambda:QTimer.singleShot(0,self.overlay.createRect))
+        self.vScrollBar.actionTriggered.connect(
+            lambda:QTimer.singleShot(0, self.overlay.createRect)
+            )
         self.hScrollBar.actionTriggered.connect(self.addColumn_)
-        self.hScrollBar.actionTriggered.connect(lambda:QTimer.singleShot(0,self.overlay.createRect))
+        self.hScrollBar.actionTriggered.connect(
+            lambda:QTimer.singleShot(0, self.overlay.createRect)
+            )
         self.vScrollBar.sliderMoved.connect(self.disableAddRow)
         self.hScrollBar.sliderMoved.connect(self.disableAddColumn)
         self.vScrollBar.sliderReleased.connect(self.enableAddRow)
         self.hScrollBar.sliderReleased.connect(self.enableAddColumn)
-        self.horizontalHeader().sectionResized.connect(self.overlay.createRect)
+        self.horizontalHeader().sectionResized.connect(
+            self.overlay.createRect
+            )
         self.verticalHeader().sectionResized.connect(self.overlay.createRect)
 
-    def eventFilter(self,obj,event):
-        '''Filters events from various objects intended to provide expected response'''
+    def eventFilter(self, obj, event):
+        """Filters events from various objects.
+
+        Intended to provide expected response
+        """
         if event.type() == QEvent.KeyPress:
             if event.key() == Qt.Key_Equal:
                 globals_.formula_mode = True
                 parentWidget = self.parentWidget()
                 parentWidget.commandLineEdit.setFocus(Qt.ShortcutFocusReason)
                 parentWidget.commandLineEdit.insert('=')
-                self.model().setData(self.currentIndex(),QColor(199,196,26),
-                        role=Qt.BackgroundRole)
+                self.model().setData(
+                    self.currentIndex(),
+                    QColor(199, 196, 26),
+                    role=Qt.BackgroundRole
+                    )
                 return True
             elif event.key() == Qt.Key_Left:
                 self.event(event)
@@ -82,20 +97,25 @@ class MyView(QTableView):
                 currentIndex = self.currentIndex()
                 rowOfCurrentIndex = currentIndex.row()
                 columnOfCurrentIndex = currentIndex.column()
-                newCurrentIndex = self.model().index(rowOfCurrentIndex+1,
-                        columnOfCurrentIndex)
+                newCurrentIndex = self.model().index(
+                    rowOfCurrentIndex + 1,
+                    columnOfCurrentIndex
+                    )
                 self.setCurrentIndex(newCurrentIndex)
                 return True
             else:
                 return False
         else:
-            return False        
+            return False
 
-    def selectionChanged(self,selected,deselected):
-        '''Handles proper response under corresponding state for selection changes'''
+    def selectionChanged(self, selected, deselected):
+        """Handles proper response
+
+        Under corresponding state for selection changes
+        """
         selectionModel = self.selectionModel()
         selectedIndexes = selectionModel.selectedIndexes()
-        if not globals_.formula_mode: 
+        if not globals_.formula_mode:
             commandLineEdit = self.parent().commandLineEdit
             commandLineEdit.clear()
             if len(selectedIndexes) == 1:
@@ -107,7 +127,9 @@ class MyView(QTableView):
                     self.model().domainHighlight.clear()
                     globals_.domainHighlight = False
                 index = selectedIndexes[0]
-                font = self.model().fonts.get((index.row(),index.column()),globals_.defaultFont)
+                font = self.model().fonts.get(
+                    (index.row(), index.column()), globals_.defaultFont
+                    )
                 size = font.pointSizeF()
                 if size.is_integer():
                     size = int(size)
@@ -125,7 +147,9 @@ class MyView(QTableView):
                     self.parent().underlineAction.setChecked(True)
                 else:
                     self.parent().underlineAction.setChecked(False)
-                alignment = self.model().data(index,role=Qt.TextAlignmentRole)
+                alignment = self.model().data(
+                    index, role=Qt.TextAlignmentRole
+                    )
                 hexAlignment = hex(alignment)
                 if hexAlignment[-1] == '1':
                     self.parent().alignL.setChecked(True)
@@ -139,17 +163,21 @@ class MyView(QTableView):
                     self.parent().alignD.setChecked(True)
                 else:
                     self.parent().alignM.setChecked(True)
-                if f := self.model().formulas.get((index.row(),index.column()),None):
+                if f := self.model().formulas.get(
+                        (index.row(), index.column()), None):
                     self.parent().commandLineEdit.setText('='+f.text)
                     globals_.domainHighlight = True
                     for d in f.domain:
-                        coloredIndex = self.model().index(d[0],d[1])
-                        self.model().setData(coloredIndex,QColor(119,242,178),role=Qt.BackgroundRole)
+                        coloredIndex = self.model().index(d[0], d[1])
+                        self.model().setData(
+                            coloredIndex, QColor(119, 242, 178),
+                            role=Qt.BackgroundRole
+                            )
             else:
                 for action in self.actions():
                     if action.objectName() == 'merge':
                         action.setEnabled(True)
-        elif globals_.formula_mode: 
+        elif globals_.formula_mode:
             if len(selectedIndexes) == 1:
                 commandLineEdit = self.parent().commandLineEdit
                 cursorPosition = commandLineEdit.cursorPosition()
@@ -159,7 +187,9 @@ class MyView(QTableView):
                 row = self.currentIndex().row()
                 column = self.currentIndex().column()
                 if globals_.REGEXP3.search(text0):
-                    newText = globals_.REGEXP3.sub(model.getAlphanumeric(column,row),text0)
+                    newText = globals_.REGEXP3.sub(
+                        model.getAlphanumeric(column, row), text0
+                        )
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
@@ -167,23 +197,25 @@ class MyView(QTableView):
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
                 elif globals_.REGEXP4.search(text0):
-                    newText = globals_.REGEXP4.sub(model.getAlphanumeric(column,row),text0)
-                    finalText = newText +text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
-                    if text1:
-                        cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0 == '=':
-                    newText = text0 + model.getAlphanumeric(column,row)
+                    newText = globals_.REGEXP4.sub(
+                        model.getAlphanumeric(column, row), text0
+                        )
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.endswith(('*','+','-','/','(',',')):
-                    newText = text0 + model.getAlphanumeric(column,row)
+                elif text0 == '=':
+                    newText = text0 + model.getAlphanumeric(column, row)
+                    finalText = newText + text1
+                    commandLineEdit.clear()
+                    commandLineEdit.setText(finalText)
+                    if text1:
+                        cursorPosition += len(newText) - len(text0)
+                        commandLineEdit.setCursorPosition(cursorPosition)
+                elif text0.endswith(('*', '+', '-', '/', '(', ',')):
+                    newText = text0 + model.getAlphanumeric(column, row)
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
@@ -203,12 +235,19 @@ class MyView(QTableView):
                 for index in selectedIndexes:
                     rows.append(index.row())
                     columns.append(index.column())
-                topLeftIndex = model.index(min(rows),min(columns)) 
-                bottomRightIndex = model.index(max(rows),max(columns))
-                alphanumeric1 = model.getAlphanumeric(topLeftIndex.column(),topLeftIndex.row())
-                alphanumeric2 = model.getAlphanumeric(bottomRightIndex.column(),bottomRightIndex.row())
+                topLeftIndex = model.index(min(rows), min(columns))
+                bottomRightIndex = model.index(max(rows), max(columns))
+                alphanumeric1 = model.getAlphanumeric(
+                    topLeftIndex.column(), topLeftIndex.row()
+                    )
+                alphanumeric2 = model.getAlphanumeric(
+                    bottomRightIndex.column(), bottomRightIndex.row()
+                    )
                 if globals_.REGEXP3.search(text0):
-                    newText = globals_.REGEXP3.sub('['+alphanumeric1+':'+alphanumeric2+']',text0)
+                    newText = globals_.REGEXP3.sub(
+                        '['+alphanumeric1+':'+alphanumeric2+']',
+                        text0
+                        )
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
@@ -216,23 +255,30 @@ class MyView(QTableView):
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
                 elif globals_.REGEXP4.search(text0):
-                    newText = globals_.REGEXP4.sub('['+alphanumeric1+':'+alphanumeric2+']',text0)
-                    finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
-                    if text1:
-                        cursorPosition  += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0 == '=':
-                    newText = text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
+                    newText = globals_.REGEXP4.sub(
+                        '['+alphanumeric1+':'+alphanumeric2+']',
+                        text0
+                        )
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
                         commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0.endswith(('*','+','-','/','(',',')):
-                    newText = text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
+                elif text0 == '=':
+                    newText = \
+                        text0 + \
+                        '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
+                    finalText = newText + text1
+                    commandLineEdit.clear()
+                    commandLineEdit.setText(finalText)
+                    if text1:
+                        cursorPosition += len(newText) - len(text0)
+                        commandLineEdit.setCursorPosition(cursorPosition)
+                elif text0.endswith(('*', '+', '-', '/', '(', ',')):
+                    newText = \
+                        text0 + \
+                        '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
                     finalText = newText + text1
                     commandLineEdit.clear()
                     commandLineEdit.setText(finalText)
@@ -241,20 +287,20 @@ class MyView(QTableView):
                         commandLineEdit.setCursorPosition(cursorPosition)
                 commandLineEdit.setFocus(Qt.OtherFocusReason)
                 commandLineEdit.deselect()
-        super().selectionChanged(selected,deselected)
+        super().selectionChanged(selected, deselected)
         self.overlay.createRect()
 
-    def createFormula(self,text,arrayRanges,scalars,domain):
-        '''Checks for formula integrity and calls the formula constructor'''
+    def createFormula(self, text, arrayRanges, scalars, domain):
+        """Checks for formula integrity and calls the formula constructor"""
         indexes = []
         for array in arrayRanges:
             rowLimit1 = array[0][0]
             rowLimit2 = array[1][0]+1
             columnLimit1 = array[0][1]
             columnLimit2 = array[1][1]+1
-            for row in range(rowLimit1,rowLimit2):
-                for column in range(columnLimit1,columnLimit2):
-                    indexes.append((row,column))
+            for row in range(rowLimit1, rowLimit2):
+                for column in range(columnLimit1, columnLimit2):
+                    indexes.append((row, column))
         if scalars:
             indexes += scalars
         domainIndexes = []
@@ -262,42 +308,52 @@ class MyView(QTableView):
         resultRows = domain['resultRows']
         resultIndexColumn = domain['resultIndexColumn']
         resultColumns = domain['resultColumns']
-        address = resultIndexRow,resultIndexColumn
-        for row in range(resultIndexRow,resultIndexRow+resultRows):
-            for column in range(resultIndexColumn,resultIndexColumn+resultColumns):
-                domainIndexes.append((row,column))
+        address = resultIndexRow, resultIndexColumn
+        for row in range(resultIndexRow, resultIndexRow+resultRows):
+            for column in range(
+                    resultIndexColumn, resultIndexColumn+resultColumns):
+                domainIndexes.append((row, column))
         indexesSet = set(indexes)
         domainIndexesSet = set(domainIndexes)
         if indexesSet.intersection(domainIndexesSet):
-            raise CircularReferenceError(resultIndexRow,resultIndexColumn)
+            raise CircularReferenceError(resultIndexRow, resultIndexColumn)
         if self.model().formulas:
             for f_ in self.model().formulas.values():
                 formulaIndexSet = set(f_.indexes)
                 if domainIndexesSet.intersection(formulaIndexSet):
-                    self.circularReferenceCheck(indexesSet,f_)
-            if f_ := self.model().formulas.get((resultIndexRow,resultIndexColumn),None):
+                    self.circularReferenceCheck(indexesSet, f_)
+            if f_ := self.model().formulas.get(
+                    (resultIndexRow, resultIndexColumn), None):
                 if f_.text != text:
-                    del self.model().formulas[resultIndexRow,resultIndexColumn]
-                    self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+                    del self.model().formulas[
+                        resultIndexRow, resultIndexColumn
+                        ]
+                    self.model().formulas[resultIndexRow, resultIndexColumn] \
+                        = Formula(text, address, indexes, domainIndexes)
             else:
-                self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+                self.model().formulas[resultIndexRow, resultIndexColumn] \
+                    = Formula(text, address, indexes, domainIndexes)
         else:
-            self.model().formulas[resultIndexRow,resultIndexColumn] = Formula(text,address,indexes,domainIndexes)
+            self.model().formulas[resultIndexRow, resultIndexColumn] \
+                = Formula(text, address, indexes, domainIndexes)
 
-    def circularReferenceCheck(self,subject,match):
-        '''Checks for possible circular references which are not allowed by design'''
+    def circularReferenceCheck(self, subject, match):
+        """Checks for possible circular references
+
+        Circular references are not allowed by design
+        """
         formulaDomainSet = set(match.domain)
         if formulaDomainSet.intersection(subject):
             index = self.parent().commandLineEdit.currentIndex
-            raise CircularReferenceError(index.row(),index.column())
+            raise CircularReferenceError(index.row(), index.column())
         else:
             for f in self.model().formulas.values():
                 formulaIndexSet = set(f.indexes)
                 if formulaDomainSet.intersection(formulaIndexSet):
-                    self.circularReferenceCheck(subject,f)
+                    self.circularReferenceCheck(subject, f)
 
-    def startDrag(self,supportedActions):
-        '''Begins dragging operation'''
+    def startDrag(self, supportedActions):
+        """Begins dragging operation"""
         if globals_.drag:
             super().startDrag(Qt.MoveAction)
             if globals_.historyIndex != -1:
@@ -306,53 +362,56 @@ class MyView(QTableView):
             globals_.drag = False
 
     def dropEvent(self, event):
-        '''Initialize the drop action with the corresponding move or copy action'''
+        """Initialize drop action with move or copy action"""
         data = event.mimeData()
         index = self.indexAt(event.pos())
         if event.keyboardModifiers() == Qt.ControlModifier:
-            self.model().dropMimeData(data,Qt.CopyAction,-1,-1,index)
+            self.model().dropMimeData(data, Qt.CopyAction, -1, -1, index)
         else:
-            self.model().dropMimeData(data,Qt.MoveAction,-1,-1,index)
-        
+            self.model().dropMimeData(data, Qt.MoveAction, -1, -1, index)
+
     def enableAddRow(self):
-        '''Sets corresponding boolean attribute'''
+        """Sets corresponding boolean attribute"""
         self.addRowBool = True
-    
+
     def disableAddRow(self):
-        '''Sets corresponding boolean attribute'''
+        """Sets corresponding boolean attribute"""
         self.addRowBool = False
 
     def enableAddColumn(self):
-        '''Sets corresponding boolean attribute'''
+        """Sets corresponding boolean attribute"""
         self.addColumnBool = True
 
     def disableAddColumn(self):
-        '''Sets corresponding boolean attribute'''
+        """Sets corresponding boolean attribute"""
         self.addColumnBool = False
-    
-    def addRow_(self,action):
-        '''Adds one row to model and view'''
+
+    def addRow_(self, action):
+        """Adds one row to model and view"""
         if self.addRowBool:
             sliderPosition = self.vScrollBar.sliderPosition()
             if sliderPosition == self.vScrollBar.maximum():
-                self.model().insertRows(self.model().rowCount(),1)
+                self.model().insertRows(self.model().rowCount(), 1)
                 self.vScrollBar.setMaximum(self.model().rowCount())
                 self.vScrollBar.setSliderPosition(self.vScrollBar.maximum())
 
-    def addColumn_(self,action):
-        '''Adds one column to model and view'''
-        #Currently view and model are capped to 18278 columns
-        #This is temporary while a proper algorithm is developed that handles
-        #any amount of columns that returns a proper alphanumeric code
+    def addColumn_(self, action):
+        """Adds one column to model and view"""
+        # Currently view and model are capped to 18278 columns
+        # This is temporary while a proper algorithm is developed that handles
+        # any amount of columns that returns a proper alphanumeric code
+
         if self.model().columnCount() < 18278:
             if self.addColumnBool:
                 sliderPosition = self.hScrollBar.sliderPosition()
                 if sliderPosition == self.hScrollBar.maximum():
-                    self.model().insertColumns(self.model().columnCount(),1)
-                    self.hScrollBar.setSliderPosition(self.hScrollBar.maximum())
+                    self.model().insertColumns(self.model().columnCount(), 1)
+                    self.hScrollBar.setSliderPosition(
+                        self.hScrollBar.maximum()
+                        )
 
     def saveToHistory(self):
-        '''Saves current model and formulas state up to 5 instances'''
+        """Saves current model and formulas state up to 5 instances"""
         if len(self.model().history) == 5:
             self.model().history = self.model().history[1:]
         data = self.model().dataContainer.copy()
@@ -361,11 +420,14 @@ class MyView(QTableView):
         fonts = self.model().fonts.copy()
         foreground = self.model().foreground.copy()
         background = self.model().background.copy()
-        self.model().history.append((data,formulas,align,fonts,foreground,background))
+        self.model().history.append((
+            data, formulas, align,
+            fonts, foreground, background)
+            )
         globals_.historyIndex = -1
 
     def redo(self):
-        '''Basic redo functionality'''
+        """Basic redo functionality"""
         if globals_.historyIndex == -1:
             return
         globals_.historyIndex += 1
@@ -382,12 +444,15 @@ class MyView(QTableView):
         self.model().fonts = fonts.copy()
         self.model().foreground = foreground.copy()
         self.model().background = background.copy()
-        startIndex = self.model().index(0,0)
-        endIndex = self.model().index(self.model().rowCount()-1,self.model().columnCount()-1)
-        self.model().dataChanged.emit(startIndex,endIndex)
+        startIndex = self.model().index(0, 0)
+        endIndex = self.model().index(
+            self.model().rowCount()-1,
+            self.model().columnCount()-1
+            )
+        self.model().dataChanged.emit(startIndex, endIndex)
 
     def undo(self):
-        '''Basic undo functionality'''
+        """Basic undo functionality"""
         if globals_.historyIndex + len(self.model().history) == 0:
             return
         globals_.historyIndex -= 1
@@ -404,13 +469,16 @@ class MyView(QTableView):
         self.model().fonts = fonts.copy()
         self.model().foreground = foreground.copy()
         self.model().background = background.copy()
-        startIndex = self.model().index(0,0)
-        endIndex = self.model().index(self.model().rowCount()-1,self.model().columnCount()-1)
-        self.model().dataChanged.emit(startIndex,endIndex)
+        startIndex = self.model().index(0, 0)
+        endIndex = self.model().index(
+            self.model().rowCount()-1,
+            self.model().columnCount()-1
+            )
+        self.model().dataChanged.emit(startIndex, endIndex)
 
-    def keyPressEvent(self,event):
-        '''Handles keyboard interaction over the view to provide expected behaviour'''
-        if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace: 
+    def keyPressEvent(self, event):
+        """Handles keyboard interaction over the view"""
+        if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
             if globals_.historyIndex != -1:
                 hIndex = globals_.historyIndex + len(self.model().history) + 1
                 self.model().history = self.model().history[:hIndex]
@@ -420,7 +488,7 @@ class MyView(QTableView):
             columns = []
             self.model().formulaSnap = list(self.model().formulas.values())
             for selIndex in selectedIndexes:
-                self.model().setData(selIndex,'',formulaTriggered='ERASE')
+                self.model().setData(selIndex, '', formulaTriggered='ERASE')
                 rows.append(selIndex.row())
                 columns.append(selIndex.column())
             if self.model().ftoapply:
@@ -429,9 +497,9 @@ class MyView(QTableView):
             minColumn = min(columns)
             maxRow = max(rows)
             maxColumn = max(columns)
-            minIndex = self.model().index(minRow,minColumn)
-            maxIndex = self.model().index(maxRow,maxColumn)
-            self.model().dataChanged.emit(minIndex,maxIndex)
+            minIndex = self.model().index(minRow, minColumn)
+            maxIndex = self.model().index(maxRow, maxColumn)
+            self.model().dataChanged.emit(minIndex, maxIndex)
             self.saveToHistory()
         elif event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_Z:
@@ -441,37 +509,42 @@ class MyView(QTableView):
             elif event.key() == Qt.Key_Return:
                 if selected := self.selectionModel().selectedIndexes():
                     index2copy = selected[0]
-                    data2copy = self.model().dataContainer[index2copy.row(),index2copy.column()]
-                    self.model().formulaSnap = list(self.model().formulas.values())
+                    data2copy = self.model().dataContainer[
+                        index2copy.row(),
+                        index2copy.column()
+                        ]
+                    self.model().formulaSnap = list(
+                        self.model().formulas.values())
                     for ind in selected[1:]:
-                        self.model().setData(ind,data2copy,formulaTriggered='ERASE')
+                        self.model().setData(
+                            ind, data2copy, formulaTriggered='ERASE')
                     if self.model().ftoapply:
                         self.model().updateModel_()
                     self.saveToHistory()
-                    self.model().dataChanged.emit(selected[0],selected[-1])
+                    self.model().dataChanged.emit(selected[0], selected[-1])
             else:
                 super().keyPressEvent(event)
         else:
             super().keyPressEvent(event)
 
-    def mouseMoveEvent(self,event):
-        '''Tracks mouse position and checks for dragging handles'''
+    def mouseMoveEvent(self, event):
+        """Tracks mouse position and checks for dragging handles"""
         posX = event.x() + self.verticalHeader().width()
         posY = event.y() + self.horizontalHeader().height()
-        if self.overlay.checkIfContains(QPoint(posX,posY)):
+        if self.overlay.checkIfContains(QPoint(posX, posY)):
             QApplication.setOverrideCursor(Qt.OpenHandCursor)
         else:
             QApplication.restoreOverrideCursor()
         super().mouseMoveEvent(event)
 
-    def mousePressEvent(self,event):
-        '''Checks if a drag operation is to take place'''
+    def mousePressEvent(self, event):
+        """Checks if a drag operation is to take place"""
         posX = event.x() + self.verticalHeader().width()
         posY = event.y() + self.horizontalHeader().height()
-        globals_.drag = self.overlay.checkIfContains(QPoint(posX,posY))
+        globals_.drag = self.overlay.checkIfContains(QPoint(posX, posY))
         super().mousePressEvent(event)
 
-    def resizeEvent(self,event):
+    def resizeEvent(self, event):
         """Updates overlay size to view's size"""
         super().resizeEvent(event)
         try:
@@ -479,11 +552,12 @@ class MyView(QTableView):
             self.overlay.setGeometry(self.rect())
         except AssertionError:
             pass
-    
+
+
 class Overlay(QWidget):
-    '''Provides visual aesthetic for selections and drag functionality'''
-    def __init__(self,parent=None):
-        super(Overlay,self).__init__(parent)
+    """Provides visual aesthetic for selections and drag functionality"""
+    def __init__(self, parent=None):
+        super(Overlay, self).__init__(parent)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.rect_ = None
         self.auxRects = []
@@ -500,44 +574,59 @@ class Overlay(QWidget):
         if len(selected) == 1:
             index = selected[0]
             rect_ = parent.visualRect(index)
-            rect_.translate(offsetX,offsetY)
+            rect_.translate(offsetX, offsetY)
             self.rect_ = rect_
-            auxRight = QRect(self.rect_.topRight(),QSize(-5,self.rect_.height()))
+            auxRight = QRect(
+                self.rect_.topRight(), QSize(-5, self.rect_.height())
+                )
             self.auxRects.append(auxRight)
-            auxLeft = QRect(self.rect_.topLeft(),QSize(5,self.rect_.height()))
+            auxLeft = QRect(
+                self.rect_.topLeft(), QSize(5, self.rect_.height()))
             self.auxRects.append(auxLeft)
-            auxTop = QRect(self.rect_.topLeft(),QSize(self.rect_.width(),5))
+            auxTop = QRect(self.rect_.topLeft(), QSize(self.rect_.width(), 5))
             self.auxRects.append(auxTop)
-            auxBottom = QRect(self.rect_.bottomLeft(),QSize(self.rect_.width(),-5))
+            auxBottom = QRect(
+                self.rect_.bottomLeft(), QSize(self.rect_.width(), -5)
+                )
             self.auxRects.append(auxBottom)
         elif len(selected) > 1:
             for index in selected:
                 rows.append(index.row())
                 columns.append(index.column())
-            topLeftIndex = parent.model().index(min(rows),min(columns))
-            bottomRightIndex = parent.model().index(max(rows),max(columns))
+            topLeftIndex = parent.model().index(min(rows), min(columns))
+            bottomRightIndex = parent.model().index(max(rows), max(columns))
             height = bottomRightIndex.row() - topLeftIndex.row() + 1
             width = bottomRightIndex.column() - topLeftIndex.column() + 1
             if height * width == len(selected):
                 topLeftCorner = parent.visualRect(topLeftIndex).topLeft()
-                bottomRightCorner = parent.visualRect(bottomRightIndex).bottomRight()
-                rect_ = QRect(topLeftCorner,bottomRightCorner)
-                rect_.translate(offsetX,offsetY)
+                bottomRightCorner =\
+                    parent.visualRect(bottomRightIndex).bottomRight()
+                rect_ = QRect(topLeftCorner, bottomRightCorner)
+                rect_.translate(offsetX, offsetY)
                 self.rect_ = rect_
-                auxRight = QRect(self.rect_.topRight(),QSize(-5,self.rect_.height()))
+                auxRight = QRect(
+                    self.rect_.topRight(),
+                    QSize(-5, self.rect_.height())
+                    )
                 self.auxRects.append(auxRight)
-                auxLeft = QRect(self.rect_.topLeft(),QSize(5,self.rect_.height()))
+                auxLeft = QRect(
+                    self.rect_.topLeft(), QSize(5, self.rect_.height())
+                    )
                 self.auxRects.append(auxLeft)
-                auxTop = QRect(self.rect_.topLeft(),QSize(self.rect_.width(),5))
+                auxTop = QRect(
+                    self.rect_.topLeft(), QSize(self.rect_.width(), 5)
+                    )
                 self.auxRects.append(auxTop)
-                auxBottom = QRect(self.rect_.bottomLeft(),QSize(self.rect_.width(),-5))
+                auxBottom = QRect(
+                    self.rect_.bottomLeft(), QSize(self.rect_.width(), -5)
+                    )
                 self.auxRects.append(auxBottom)
             else:
                 self.rect_ = None
         self.update()
 
-    def checkIfContains(self,pos):
-        '''Checks if mouse is over aux rects'''
+    def checkIfContains(self, pos):
+        """Checks if mouse is over aux rects"""
         for r in self.auxRects:
             if r.contains(pos):
                 return True
@@ -545,8 +634,8 @@ class Overlay(QWidget):
 
     def sizeHint(self):
         return self.parent().rect()
-    
-    def paintEvent(self,event):
+
+    def paintEvent(self, event):
         if self.rect_:
             painter = QPainter()
             painter.begin(self)
@@ -558,9 +647,11 @@ class Overlay(QWidget):
             painter.drawRect(self.rect_)
             painter.end()
 
+
 class Formula():
-    def __init__(self,text,address,indexes,domain):
-        '''Constructor params: text->str, address->tuple, indexes->list, domain->list'''
+    def __init__(
+            self, text: str, address: tuple, indexes: list, domain: dict):
+        """Main Formula object constructor"""
         self.text = text
         self.addressRow = address[0]
         self.addressColumn = address[1]
