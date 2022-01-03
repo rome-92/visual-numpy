@@ -21,7 +21,13 @@
 import re
 
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-POINT_SIZES = ['6','7','8','9','10','10.5','11','12','13','14','15','16','18','20','22','24','28','32','36','40','44','48','54','60','66','72','80','88','96']
+POINT_SIZES = [
+    '6', '7', '8', '9', '10', '10.5',
+    '11', '12', '13', '14', '15', '16',
+    '18', '20', '22', '24', '28', '32',
+    '36', '40', '44', '48', '54', '60',
+    '66', '72', '80', '88', '96'
+    ]
 currentFont = None
 defaultFont = None
 defaultForeground = None
@@ -36,5 +42,3 @@ REGEXP3 = re.compile(r'[A-Z]{1,3}[0-9]+$')
 REGEXP4 = re.compile(r'\[[A-Z]{1,3}[0-9]+:[A-Z]{1,3}[0-9]+]$')
 LETTERS_REG_EXP = re.compile(r'[A-Z]+')
 NUMBERS_REG_EXP = re.compile(r'[0-9]+')
-
-
