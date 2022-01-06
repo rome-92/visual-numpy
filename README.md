@@ -6,9 +6,11 @@ Visual Numpy is a 100% python based application using the PySide6 library which 
 ### Prerequisites
 
 Get the prerequisites:
-- Python (>=3.6)
+- Python (>=3.8)
 - PySide6 (>=6.0)
 - numpy (>=1.15)
+
+Note: If using Ubuntu other than LTS 20.04 installing pyside6 via pip could resort to some needed libraries missing. In this case be sure to install all missing libraries separately.
 
 ## Installation
 Currently no wheels or binaries are supported so you will need to clone the repository.
