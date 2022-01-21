@@ -1,7 +1,16 @@
+import sys
+import os
+import csv
+
 import pytest
-from MyWidgets import MainWindow
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStyleOptionViewItem
+
+sys.path.append(os.path.dirname(__file__)+'/..')
+from MyWidgets import MainWindow
+
+
+dirname = os.path.dirname(__file__)
 
 
 @pytest.fixture(scope='session')
@@ -12,7 +21,7 @@ def app(qapp):
 
 @pytest.fixture(scope='function')
 def loadF(app):
-    yield app.loadFile('dependencies5.vnp')
+    yield app.loadFile(dirname + '/dependencies5.vnp')
     app.createNew()
 
 
@@ -29,7 +38,7 @@ def test_getCoord(app, index, expected):
 
 
 def test_loadFile(app):
-    app.loadFile('dependencies5.vnp')
+    app.loadFile(dirname + '/dependencies5.vnp')
     model = app.view.model()
     assert model.formulas[5, 4].text == '[C6:C8]*2'
     assert model.dataContainer[5, 5] == 4 + 0j
@@ -41,8 +50,26 @@ def test_loadFile(app):
     assert model.background[4, 4].color().name() == '#e9b96e'
 
 
+def test_importFile(app):
+    app.importFile(dirname + '/csv_sample.csv')
+    model = app.view.model()
+    model.thousandsSep = False
+    path = dirname + '/csv_sample.csv'
+    with open(path, encoding='latin', newline='') as myFile:
+        reader = csv.reader(myFile, dialect='excel')
+        for y, row in enumerate(reader):
+            for x, row in enumerate(row):
+                try:
+                    number = complex(row)
+                    stored = complex(model.data(model.index(y, x)))
+                    assert number == stored
+
+                except ValueError:
+                    assert row == model.data(model.index(y, x))
+
+
 def test_createNew(app):
-    app.loadFile('dependencies5.vnp')
+    app.loadFile(dirname + '/dependencies5.vnp')
     app.createNew()
     model = app.view.model()
     assert len(model.dataContainer) == 0

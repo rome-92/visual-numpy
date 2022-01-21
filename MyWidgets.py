@@ -283,14 +283,17 @@ class MainWindow(QMainWindow):
             self.view.model().background.copy()
             ))
 
-    def importFile(self):
+    def importFile(self, file=None):
         """Import csv files"""
-        name, notUsed = QFileDialog.getOpenFileName(
-            self,
-            'Import File',
-            '',
-            'csv files (*.csv)'
-            )
+        if not file:
+            name, notUsed = QFileDialog.getOpenFileName(
+                self,
+                'Import File',
+                '',
+                'csv files (*.csv)'
+                )
+        else:
+            name = file
         if name:
             try:
                 with open(name, encoding='latin', newline='') as myFile:
