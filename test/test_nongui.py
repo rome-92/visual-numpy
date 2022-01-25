@@ -80,6 +80,20 @@ def test_createNew(app):
     assert len(model.background) == 0
 
 
+def test_fileExport(app, loadF):
+    app.fileExport('export_test')
+    model = app.view.model()
+    try:
+        with open('export_test.csv', encoding='latin', newline='') as myFile:
+            reader = csv.reader(myFile, dialect='excel')
+            for y, row in enumerate(reader):
+                for x, e in enumerate(row):
+                    index = model.index(y, x)
+                    assert e == model.data(index)
+    finally:
+        os.remove('export_test.csv')
+
+
 def test_input(app):
     index = app.view.model().index(0, 3)
     option = QStyleOptionViewItem()
