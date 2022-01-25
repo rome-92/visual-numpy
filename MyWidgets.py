@@ -593,14 +593,17 @@ class MainWindow(QMainWindow):
                 info = 'There was an error loading '+name
                 self.statusBar().showMessage(info, 5000)
 
-    def fileExport(self):
+    def fileExport(self, file=None):
         """Export file into .csv format"""
-        name, notUsed = QFileDialog.getSaveFileName(
-            self,
-            'Save File',
-            '',
-            'csv file (*.csv)'
-            )
+        if not file:
+            name, notUsed = QFileDialog.getSaveFileName(
+                self,
+                'Save File',
+                '',
+                'csv file (*.csv)'
+                )
+        else:
+            name = file
         if name:
             name = name.replace('.csv', '')
             model = self.view.model()
