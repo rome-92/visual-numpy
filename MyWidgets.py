@@ -611,18 +611,24 @@ class MainWindow(QMainWindow):
                 columns.append(index[1])
             bottomRow = max(rows)
             rightColumn = max(columns)
-            dt = np.dtype('U64')
-            array = np.zeros((bottomRow+1, rightColumn+1), dtype=dt)
             try:
-                for row in range(0, bottomRow+1):
-                    for column in range(0, rightColumn+1):
-                        array[row, column] = \
-                            model.data(
-                                model.index(row, column)).replace(',', '')
-                np.savetxt(name+'.csv', array, delimiter=',', fmt='%-1s')
+                with open(name+'.csv', 'w', newline='') as csvFile:
+                    writer = csv.writer(
+                        csvFile,
+                        dialect='excel',
+                        delimiter=','
+                        )
+                    for row in range(0, bottomRow+1):
+                        rowToAdd = []
+                        for column in range(0, rightColumn+1):
+                            data = model.data(
+                                model.index(row, column))
+                            rowToAdd.append(data)
+                        writer.writerow(rowToAdd)
                 info = name + ' was succesfully exported'
                 self.statusBar().showMessage(info, 5000)
             except Exception as e:
+                traceback.print_tb(e.__traceback__)
                 print(e)
                 info = 'There was an error exporting ' + name
                 self.statusBar().showMessage(info, 5000)
