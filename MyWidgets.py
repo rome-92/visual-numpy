@@ -1178,8 +1178,9 @@ class MainWindow(QMainWindow):
     def addAllPrecedences(self, formulas):
         """Populate allPrecedences set with appropiate values"""
         for p in formulas:
-            self.addAllPrecedences(p.precedence)
-        self.view.model().allPrecedences.update(formulas)
+            if p.precedence:
+                self.addAllPrecedences(p.precedence)
+            self.view.model().allPrecedences.add(p)
 
 
 class CommandLineEdit(QLineEdit):
