@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.1'
+version = '3.0.0-alpha.2'
 
 
 class MainWindow(QMainWindow):

@@ -521,6 +521,8 @@ class MyView(QTableView):
         elif event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_Z:
                 self.undo()
+            elif event.key() == Qt.Key_G:
+                self.auxMethod()
             elif event.key() == Qt.Key_R:
                 self.redo()
             elif event.key() == Qt.Key_Return:
@@ -556,6 +558,13 @@ class MyView(QTableView):
         else:
             super().keyPressEvent(event)
         self.model().formulaSnap.clear()
+
+    def auxMethod(self):
+        for f in self.model().formulas.values():
+            subList = [s.text for s in f.subsequent]
+            precList = [s.text for s in f.precedence]
+            print(f'{f.text}: sub-> {subList}')
+            print(f'{f.text}: prec-> {precList}')
 
     def mouseMoveEvent(self, event):
         """Track mouse position and checks for dragging handles"""
