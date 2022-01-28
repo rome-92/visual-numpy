@@ -19,6 +19,7 @@
 # --------------------------------------------------------------------
 
 import copy
+import weakref
 
 from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QSize, QTimer
 from PySide6.QtWidgets import (
@@ -291,8 +292,8 @@ class MyView(QTableView):
     def createFormula(self, text, arrayRanges, scalars, domain):
         """Check formula integrity and call the formula constructor"""
         indexes = []
-        precedence = set()
-        subsequent = set()
+        precedence = weakref.WeakSet()
+        subsequent = weakref.WeakSet()
         for array in arrayRanges:
             rowLimit1 = array[0][0]
             rowLimit2 = array[1][0] + 1
@@ -338,15 +339,6 @@ class MyView(QTableView):
                     possibleF.subsequent.add(f_)
                     f_.precedence.add(possibleF)
                 if possibleF.precedence.intersection(possibleF.subsequent):
-                    for currentFs in self.model().formulas.values():
-                        try:
-                            currentFs.precedence.remove(possibleF)
-                        except KeyError:
-                            pass
-                        try:
-                            currentFs.subsequent.remove(possibleF)
-                        except KeyError:
-                            pass
                     raise CircularReferenceError(
                             resultIndexRow,
                             resultIndexColumn
@@ -355,15 +347,6 @@ class MyView(QTableView):
             if f_ := self.model().formulas.get(
                     (resultIndexRow, resultIndexColumn), None):
                 if f_.text != text:
-                    for currentFs in self.model().formulas.values():
-                        try:
-                            currentFs.precedence.remove(f_)
-                        except KeyError:
-                            pass
-                        try:
-                            currentFs.subsequent.remove(f_)
-                        except KeyError:
-                            pass
                     self.model().formulas[resultIndexRow, resultIndexColumn]\
                         = possibleF
             else:
@@ -376,15 +359,6 @@ class MyView(QTableView):
     def circularReferenceCheck(self, precedence, possibleF):
         """Check for circular references"""
         if possibleF in precedence:
-            for currentFs in self.model().formulas.values():
-                try:
-                    currentFs.precedence.remove(possibleF)
-                except KeyError:
-                    pass
-                try:
-                    currentFs.subsequent.remove(possibleF)
-                except KeyError:
-                    pass
             raise CircularReferenceError(
                 possibleF.addressRow,
                 possibleF.addressColumn
@@ -524,17 +498,14 @@ class MyView(QTableView):
             selectedIndexes = selectionModel.selectedIndexes()
             rows = []
             columns = []
-            self.model().formulaSnap = list(self.model().formulas.values())
+            self.model().formulaSnap.update(self.model().formulas.values())
             for selIndex in selectedIndexes:
-                self.model().setData(selIndex, '', formulaTriggered='ERASE')
+                self.model().setData(selIndex, '', mode='m')
                 rows.append(selIndex.row())
                 columns.append(selIndex.column())
             if self.model().ftoapply:
-                setOf = set(self.model().ftoapply)
-                setOf2 = set(self.model().formulas.values())
-                f_s = setOf.intersection(setOf2)
-                self.parent().addAllPrecedences(f_s)
-                self.parent().executeOrderResolutor(f_s)
+                self.parent().addAllPrecedences(self.model().ftoapply)
+                self.parent().executeOrderResolutor(self.model().ftoapply)
                 self.model().allPrecedences.clear()
                 self.model().applied.clear()
                 self.model().appliedStatic.clear()
@@ -559,19 +530,18 @@ class MyView(QTableView):
                         index2copy.row(),
                         index2copy.column()
                         ]
-                    self.model().formulaSnap = list(
+                    self.model().formulaSnap.update(
                         self.model().formulas.values()
                         )
                     for ind in selected[1:]:
                         self.model().setData(
-                            ind, data2copy, formulaTriggered='ERASE'
+                            ind, data2copy, mode='m'
                             )
                     if self.model().ftoapply:
-                        setOf = set(self.model().ftoapply)
-                        setOf2 = set(self.model().formulas.values())
-                        f_s = setOf.intersection(setOf2)
-                        self.parent().addAllPrecedences(f_s)
-                        self.parent().executeOrderResolutor(f_s)
+                        self.parent().addAllPrecedences(self.model().ftoapply)
+                        self.parent().executeOrderResolutor(
+                            self.model().ftoapply
+                            )
                         self.model().allPrecedences.clear()
                         self.model().applied.clear()
                         self.model().appliedStatic.clear()
@@ -721,15 +691,25 @@ class Overlay(QWidget):
 
 
 class Formula():
-    def __init__(self, text, address, indexes, domain, precedence, subsequent):
+    def __init__(self, *args):
         """Constructor for Formula object"""
-        self.text = text
-        self.addressRow = address[0]
-        self.addressColumn = address[1]
-        self.indexes = indexes
-        self.domain = domain
-        self.precedence = precedence
-        self.subsequent = subsequent
+        if len(args) > 1:
+            self.text = args[0]
+            self.addressRow = args[1][0]
+            self.addressColumn = args[1][1]
+            self.indexes = tuple(args[2])
+            self.domain = tuple(args[3])
+            self.precedence = args[4]
+            self.subsequent = args[5]
+        elif len(args) == 1:
+            self.text = args[0].text
+            self.addressRow = args[0].addressRow
+            self.addressColumn = args[0].addressColumn
+            self.indexes = args[0].indexes
+            self.domain = args[0].domain
+            self.precedence = args[0].precedence
+            self.subsequent = args[0].subsequent
+        weakref.finalize(self, print, 'Formula {} killed'.format(self.text))
 
     def __repr__(self):
         return self.text
