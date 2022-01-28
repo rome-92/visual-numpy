@@ -59,7 +59,7 @@ class MyDelegate(QStyledItemDelegate):
             globals_.defaultBackground
             )
         model.setData(index, font, role=Qt.FontRole)
-        model.setData(index, editor.text())
+        model.setData(index, editor.text(), mode='s')
         model.setData(index, textColor, role=Qt.ForegroundRole)
         model.setData(index, backColor, role=Qt.BackgroundRole)
         for f in model.formulas.values():
