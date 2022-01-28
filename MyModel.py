@@ -19,6 +19,7 @@
 # --------------------------------------------------------------------
 
 import copy
+import weakref
 
 from PySide6.QtCore import (
     QAbstractTableModel, QMimeData, QByteArray,
@@ -37,11 +38,11 @@ class MyModel(QAbstractTableModel):
         self.rows = 52
         self.columns = 52
         self.formulas = {}
-        self.ftoapply = []
-        self.applied = set()
-        self.allPrecedences = set()
-        self.appliedStatic = set()
-        self.formulaSnap = []
+        self.ftoapply = weakref.WeakSet()
+        self.applied = weakref.WeakSet()
+        self.allPrecedences = weakref.WeakSet()
+        self.appliedStatic = weakref.WeakSet()
+        self.formulaSnap = weakref.WeakSet()
         self.highlight = None
         self.domainHighlight = {}
         self.alignmentDict = {}
@@ -124,7 +125,7 @@ class MyModel(QAbstractTableModel):
             newBottomColumn = rightColumn + newColumnDifference
             selectionModel = self.parent().selectionModel()
             selectionModel.clearSelection()
-            self.formulaSnap = list(self.formulas.values())
+            self.formulaSnap.update(self.formulas.values())
             if newRowDifference > 0:
                 if newRowDifference >= (bottomRow - topRow + 1):
                     beginRow = topRow
@@ -160,68 +161,36 @@ class MyModel(QAbstractTableModel):
                     self.setData(
                         movedIndex,
                         self.dataContainer.get((row, column), ''),
-                        formulaTriggered='ERASE'
+                        mode='m'
                         )
                     if action == Qt.MoveAction:
                         if f := self.formulas.get((row, column), None):
-                            self.setData(
-                                self.index(row, column),
-                                '',
-                                formulaTriggered='ERASE'
-                                )
+                            possibleF = self.parent().Formula(f)
                             try:
                                 self.checkForCircularRef(
-                                    f,
+                                    possibleF,
                                     newRowDifference,
                                     newColumnDifference
                                     )
                             except Exception as e:
                                 print(e)
-                                for f_ in self.formulas.values():
-                                    try:
-                                        f_.precedence.remove(f)
-                                    except KeyError:
-                                        pass
-                                    try:
-                                        f_.subsequent.remove(f)
-                                    except KeyError:
-                                        pass
-                                f.precedence.clear()
-                                f.subsequent.clear()
-                                formulaIndexesSet = set(f.indexes)
-                                formulaDomainSet = set(f.domain)
-                                for f_ in self.formulas.values():
-                                    f_Domain = set(f_.domain)
-                                    f_Indexes = set(f_.indexes)
-                                    if formulaDomainSet.intersection(
-                                            f_Indexes):
-                                        f.precedence.add(f_)
-                                        f_.subsequent.add(f)
-                                    if formulaIndexesSet.intersection(
-                                            f_Domain):
-                                        f_.precedence.add(f)
-                                        f.subsequent.add(f_)
-                                self.formulas[
-                                    f.addressRow, f.addressColumn] = f
                             else:
+                                del self.formulas[row, column]
                                 self.formulas[
-                                        f.addressRow, f.addressColumn] = f
-                        else:
-                            self.setData(
-                                self.index(row, column),
-                                '',
-                                formulaTriggered='ERASE'
-                                )
+                                        possibleF.addressRow,
+                                        possibleF.addressColumn] = possibleF
+                        self.setData(
+                            self.index(row, column),
+                            '',
+                            mode='m', erase='n'
+                            )
                     selectionModel.select(
                         movedIndex,
                         QItemSelectionModel.Select
                         )
             if self.ftoapply:
-                setOf = set(self.ftoapply)
-                setOf2 = set(self.formulas.values())
-                f_s = setOf.intersection(setOf2)
-                self.parent().parent().addAllPrecedences(f_s)
-                self.parent().parent().executeOrderResolutor(f_s)
+                self.parent().parent().addAllPrecedences(self.ftoapply)
+                self.parent().parent().executeOrderResolutor(self.ftoapply)
                 self.allPrecedences.clear()
                 self.applied.clear()
                 self.appliedStatic.clear()
@@ -261,7 +230,6 @@ class MyModel(QAbstractTableModel):
                 formula.addressRow, formula.addressColumn
                 )
         formula.precedence.clear()
-        formula.subsequent.clear()
         for f_ in self.formulas.values():
             f_Domain = set(f_.domain)
             f_Indexes = set(f_.indexes)
@@ -270,7 +238,6 @@ class MyModel(QAbstractTableModel):
                 f_.subsequent.add(formula)
             if formulaIndexesSet.intersection(f_Domain):
                 f_.precedence.add(formula)
-                formula.subsequent.add(f_)
         if formula.precedence.intersection(formula.subsequent):
             raise CircularReferenceError(
                 formula.addressRow,
@@ -377,7 +344,9 @@ class MyModel(QAbstractTableModel):
                 globals_.defaultForeground
                 )
 
-    def setData(self, index, value, role=Qt.EditRole, formulaTriggered=False):
+    def setData(
+            self, index, value,
+            role=Qt.EditRole, *, mode='s', erase='y'):
         """Set the appropiate data for the corresponding role"""
         if index.row() > self.rowCount() - 1:
             self.insertRows(self.rowCount(), 1)
@@ -394,36 +363,23 @@ class MyModel(QAbstractTableModel):
                 assert self.formulas
             except AssertionError:
                 return True
-            if formulaTriggered == 'ERASE':
-                if f := self.formulas.get(
-                        (index.row(), index.column()), None):
-                    for currentFs in self.formulas.values():
-                        try:
-                            currentFs.precedence.remove(f)
-                        except KeyError:
-                            pass
-                        try:
-                            currentFs.subsequent.remove(f)
-                        except KeyError:
-                            pass
-                    del self.formulas[index.row(), index.column()]
+            if mode == 'm':
+                if erase == 'y':
+                    if f := self.formulas.get(
+                            (index.row(), index.column()), None):
+                        del self.formulas[index.row(), index.column()]
                 for f in self.formulaSnap.copy():
-                    for i in f.indexes:
-                        if index.row() == i[0] and index.column() == i[1]:
-                            self.ftoapply.append(f)
-                            self.formulaSnap.remove(f)
-                            break
-            elif formulaTriggered is True:
-                pass
-            elif formulaTriggered is False:
-                if f := self.formulas.get(
-                        (index.row(), index.column()), None):
-                    del self.formulas[index.row(), index.column()]
+                    if (index.row(), index.column()) in f.indexes:
+                        self.ftoapply.add(f)
+                        self.formulaSnap.remove(f)
+            elif mode == 's':
+                if erase == 'y':
+                    if f := self.formulas.get(
+                            (index.row(), index.column()), None):
+                        del self.formulas[index.row(), index.column()]
                 for f in self.formulas.values():
-                    for i in f.indexes:
-                        if index.row() == i[0] and index.column() == i[1]:
-                            self.ftoapply.append(f)
-                            break
+                    if (index.row(), index.column()) in f.indexes:
+                        self.ftoapply.add(f)
                 if self.ftoapply:
                     self.parent().parent().addAllPrecedences(self.ftoapply)
                     self.parent().parent().executeOrderResolutor(self.ftoapply)
