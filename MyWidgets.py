@@ -25,6 +25,7 @@ import random
 import csv
 import pickle
 import copy
+import weakref
 
 from PySide6.QtCore import QTimer, QSize, QEvent, Qt, Signal
 from PySide6.QtWidgets import (
@@ -320,7 +321,10 @@ class MainWindow(QMainWindow):
                                     rowNumber,
                                     columnNumber
                                     )
-                            self.view.model().setData(index, column)
+                            self.view.model().setData(
+                                index, column,
+                                mode='a'
+                                )
                     self.view.model().dataChanged.emit(
                         self.view.model().index(0, 0),
                         index
@@ -346,9 +350,11 @@ class MainWindow(QMainWindow):
             self.encodeFonts(fonts)
             self.encodeColors(foreground)
             self.encodeColors(background)
+            formulas = copy.deepcopy(self.view.model().formulas)
+            self.prepareFormulas(formulas)
             with open(name, 'wb') as myFile:
                 pickle.dump(model, myFile)
-                pickle.dump(self.view.model().formulas, myFile)
+                pickle.dump(formulas, myFile)
                 pickle.dump(alignment, myFile)
                 pickle.dump(fonts, myFile)
                 pickle.dump(foreground, myFile)
@@ -357,6 +363,15 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(info, 5000)
         else:
             self.saveFileAs()
+
+    def prepareFormulas(self, f):
+        """Substitute weakrefs objects for pickling"""
+        for k in f:
+            f[k].subsequent = {
+                (v.addressRow, v.addressColumn) for v in f[k].subsequent}
+            f[k].precedence = {
+                (v.addressRow, v.addressColumn) for v in f[k].precedence}
+        return f
 
     def saveFileAs(self):
         """Save file into .vnp format"""
@@ -376,9 +391,11 @@ class MainWindow(QMainWindow):
             self.encodeFonts(fonts)
             self.encodeColors(foreground)
             self.encodeColors(background)
+            formulas = copy.deepcopy(self.view.model().formulas)
+            self.prepareFormulas(formulas)
             with open(name+'.vnp', 'wb') as myFile:
                 pickle.dump(model, myFile)
-                pickle.dump(self.view.model().formulas, myFile)
+                pickle.dump(formulas, myFile)
                 pickle.dump(alignment, myFile)
                 pickle.dump(fonts, myFile)
                 pickle.dump(foreground, myFile)
@@ -561,6 +578,7 @@ class MainWindow(QMainWindow):
                     self.view.model().background = background
                     self.view.model().formulas.clear()
                     self.view.model().history.clear()
+                    self.rebuildFormulas(formulas)
                     self.view.model().formulas = formulas
                     rows = (max(v[0] for v in loadedModel.keys()))
                     columns = (max(v[1] for v in loadedModel.keys()))
@@ -589,9 +607,20 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(info, 5000)
                 self.view.saveToHistory()
             except Exception as e:
+                traceback.print_tb(e.__traceback__)
                 print(e)
                 info = 'There was an error loading '+name
                 self.statusBar().showMessage(info, 5000)
+
+    def rebuildFormulas(self, f):
+        """Rebuild formulas from loaded file"""
+        for k, v in f.items():
+            sub = v.subsequent
+            prec = v.precedence
+            v.subsequent = weakref.WeakSet()
+            v.precedence = weakref.WeakSet()
+            v.subsequent.update({f[idx] for idx in sub})
+            v.precedence.update({f[idx] for idx in prec})
 
     def fileExport(self, file=None):
         """Export file into .csv format"""
@@ -1027,7 +1056,7 @@ class MainWindow(QMainWindow):
                         self.view.model().setData(
                             ind,
                             dE,
-                            formulaTriggered=True
+                            mode='a'
                             )
                 startIndex = self.view.model().index(
                     resultIndexRow,
@@ -1063,7 +1092,7 @@ class MainWindow(QMainWindow):
                         globals_.currentFont,
                         role=Qt.FontRole
                         )
-                    self.view.model().setData(ind, row, formulaTriggered=True)
+                    self.view.model().setData(ind, row, mode='a')
                 startIndex = self.view.model().index(
                     resultIndexRow,
                     resultIndexColumn
@@ -1107,7 +1136,7 @@ class MainWindow(QMainWindow):
             self.view.model().setData(
                 startIndex,
                 result,
-                formulaTriggered=True
+                mode='a'
                 )
             self.view.model().dataChanged.emit(startIndex, endIndex)
             self.commandLineEdit.clearFocus()
