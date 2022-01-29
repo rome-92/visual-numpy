@@ -49,6 +49,8 @@ import rcIcons
 import globals_
 
 version = '3.0.0-alpha.2'
+MAGIC_NUMBER = 0x2384E
+FILE_VERSION = 3
 
 
 class MainWindow(QMainWindow):
@@ -353,6 +355,8 @@ class MainWindow(QMainWindow):
             formulas = copy.deepcopy(self.view.model().formulas)
             self.prepareFormulas(formulas)
             with open(name, 'wb') as myFile:
+                pickle.dump(MAGIC_NUMBER, myFile)
+                pickle.dump(FILE_VERSION, myFile)
                 pickle.dump(model, myFile)
                 pickle.dump(formulas, myFile)
                 pickle.dump(alignment, myFile)
@@ -562,6 +566,12 @@ class MainWindow(QMainWindow):
         if name:
             try:
                 with open(name, 'rb') as myFile:
+                    magic = pickle.load(myFile)
+                    if magic != MAGIC_NUMBER:
+                        raise IOError('File type not recognized')
+                    fVer = pickle.load(myFile)
+                    if fVer != FILE_VERSION:
+                        raise IOError('File version not supported')
                     loadedModel = pickle.load(myFile)
                     formulas = pickle.load(myFile)
                     alignment = pickle.load(myFile)
