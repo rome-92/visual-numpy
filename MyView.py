@@ -504,11 +504,9 @@ class MyView(QTableView):
                 rows.append(selIndex.row())
                 columns.append(selIndex.column())
             if self.model().ftoapply:
-                self.parent().addAllPrecedences(self.model().ftoapply)
-                self.parent().executeOrderResolutor(self.model().ftoapply)
-                self.model().allPrecedences.clear()
-                self.model().applied.clear()
-                self.model().appliedStatic.clear()
+                main = self.parent()
+                order = main.topologicalSort(self.ftoapply)
+                main.executeOrder(order)
                 self.model().ftoapply.clear()
             minRow = min(rows)
             minColumn = min(columns)
@@ -540,13 +538,9 @@ class MyView(QTableView):
                             ind, data2copy, mode='m'
                             )
                     if self.model().ftoapply:
-                        self.parent().addAllPrecedences(self.model().ftoapply)
-                        self.parent().executeOrderResolutor(
-                            self.model().ftoapply
-                            )
-                        self.model().allPrecedences.clear()
-                        self.model().applied.clear()
-                        self.model().appliedStatic.clear()
+                        main = self.parent()
+                        order = main.topologicalSort(self.ftoapply)
+                        main.executeOrder(order)
                         self.model().ftoapply.clear()
                     self.saveToHistory()
                     self.model().dataChanged.emit(selected[0], selected[-1])
