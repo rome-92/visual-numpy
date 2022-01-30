@@ -1155,42 +1155,41 @@ class MainWindow(QMainWindow):
             resultIndex[1]
             ]
         if not flag:
-            self.addAllPrecedences(currentFormula.precedence)
-            self.executeOrderResolutor(currentFormula.precedence)
+            ordered = self.topologicalSort(currentFormula.precedence)
+            self.executeOrder(ordered)
             self.view.model().ftoapply.clear()
-            self.view.model().applied.clear()
-            self.view.model().appliedStatic.clear()
-            self.view.model().allPrecedences.clear()
             self.view.saveToHistory()
         else:
             self.view.saveToHistory()
         self.view.setFocus()
 
-    def executeOrderResolutor(self, formulas):
-        """Define order and execute formulas that require recalculation"""
+    def executeOrder(self, formulas):
+        """Execute formulas in order"""
         for f in formulas:
-            self.view.model().applied.update(f.subsequent)
-            self.view.model().applied.difference_update(
-                self.view.model().allPrecedences
+            self.calculate(
+                f.text,
+                f.addressRow,
+                f.addressColumn,
+                flag=True
                 )
-            self.view.model().applied.update(self.view.model().appliedStatic)
-            if not f.subsequent.difference(self.view.model().applied):
-                if f not in self.view.model().appliedStatic:
-                    self.calculate(
-                        f.text,
-                        f.addressRow,
-                        f.addressColumn,
-                        flag=True
-                        )
-                    self.view.model().appliedStatic.add(f)
-                    self.executeOrderResolutor(f.precedence)
 
-    def addAllPrecedences(self, formulas):
-        """Populate allPrecedences set with appropiate values"""
-        for p in formulas:
-            if p.precedence:
-                self.addAllPrecedences(p.precedence)
-            self.view.model().allPrecedences.add(p)
+    def topologicalSort(self, formulas):
+        """Create ordered list of formulas"""
+        marked = set()
+        ordered = []
+
+        def dfs(node):
+            marked.add(node)
+            for n in node.precedence:
+                if n not in marked:
+                    dfs(n)
+            ordered.append(node)
+
+        for f in formulas:
+            if f not in marked:
+                dfs(f)
+        ordered = list(reversed(ordered))
+        return ordered
 
 
 class CommandLineEdit(QLineEdit):
