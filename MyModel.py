@@ -39,9 +39,6 @@ class MyModel(QAbstractTableModel):
         self.columns = 52
         self.formulas = {}
         self.ftoapply = weakref.WeakSet()
-        self.applied = weakref.WeakSet()
-        self.allPrecedences = weakref.WeakSet()
-        self.appliedStatic = weakref.WeakSet()
         self.formulaSnap = weakref.WeakSet()
         self.highlight = None
         self.domainHighlight = {}
@@ -189,11 +186,9 @@ class MyModel(QAbstractTableModel):
                         QItemSelectionModel.Select
                         )
             if self.ftoapply:
-                self.parent().parent().addAllPrecedences(self.ftoapply)
-                self.parent().parent().executeOrderResolutor(self.ftoapply)
-                self.allPrecedences.clear()
-                self.applied.clear()
-                self.appliedStatic.clear()
+                main = self.parent().parent()
+                order = main.topologicalSort(self.ftoapply)
+                main.executeOrder(order)
                 self.ftoapply.clear()
             self.dataChanged.emit(
                 self.index(topRow, leftColumn),
@@ -381,12 +376,10 @@ class MyModel(QAbstractTableModel):
                     if (index.row(), index.column()) in f.indexes:
                         self.ftoapply.add(f)
                 if self.ftoapply:
-                    self.parent().parent().addAllPrecedences(self.ftoapply)
-                    self.parent().parent().executeOrderResolutor(self.ftoapply)
+                    main = self.parent().parent()
+                    order = main.topologicalSort(self.ftoapply)
+                    main.executeOrder(order)
                     self.ftoapply.clear()
-                    self.allPrecedences.clear()
-                    self.applied.clear()
-                    self.appliedStatic.clear()
             return True
         elif role == Qt.BackgroundRole:
             if globals_.formula_mode:
