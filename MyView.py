@@ -365,7 +365,8 @@ class MyView(QTableView):
                 )
         else:
             for f in precedence:
-                self.circularReferenceCheck(f.precedence, possibleF)
+                if f.precedence:
+                    self.circularReferenceCheck(f.precedence, possibleF)
 
     def startDrag(self, supportedActions):
         """Begin dragging operation"""
