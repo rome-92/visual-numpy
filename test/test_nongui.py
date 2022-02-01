@@ -37,8 +37,8 @@ def test_getCoord(app, index, expected):
     assert app.getCoord(index) == expected
 
 
-def test_loadFile(app):
-    app.loadFile(dirname + '/dependencies5.vnp')
+def test_loadFile(app, name='/dependencies5.vnp'):
+    app.loadFile(dirname + name)
     model = app.view.model()
     assert model.formulas[5, 4].text == '[C6:C8]*2'
     assert model.dataContainer[5, 5] == 4 + 0j
@@ -121,3 +121,11 @@ def test_order(app, loadF):
     assert dataContainer[11, 4] == 6
     assert dataContainer[11, 5] == 20
     assert dataContainer[11, 6] == 29
+
+
+def test_saveFileAs(app, loadF):
+    app.saveFileAs('testSaveFile')
+    try:
+        test_loadFile(app, 'testSaveFile.vnp')
+    finally:
+        os.remove('testSaveFile.vnp')

@@ -377,14 +377,15 @@ class MainWindow(QMainWindow):
                 (v.addressRow, v.addressColumn) for v in f[k].precedence}
         return f
 
-    def saveFileAs(self):
+    def saveFileAs(self, name):
         """Save file into .vnp format"""
-        name, notUsed = QFileDialog.getSaveFileName(
-            self,
-            'Save File',
-            '',
-            'vnp files (*.vnp)'
-            )
+        if not name:
+            name, notUsed = QFileDialog.getSaveFileName(
+                self,
+                'Save File',
+                '',
+                'vnp files (*.vnp)'
+                )
         if name:
             name = name.replace('.vnp', '')
             model = self.view.model().dataContainer
