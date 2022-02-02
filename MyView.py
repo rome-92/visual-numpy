@@ -506,7 +506,7 @@ class MyView(QTableView):
                 columns.append(selIndex.column())
             if self.model().ftoapply:
                 main = self.parent()
-                order = main.topologicalSort(self.ftoapply)
+                order = main.topologicalSort(self.model().ftoapply)
                 main.executeOrder(order)
                 self.model().ftoapply.clear()
             minRow = min(rows)
