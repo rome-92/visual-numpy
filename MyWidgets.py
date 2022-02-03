@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.3'
+version = '3.0.0-alpha.4'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 3
 

@@ -3,8 +3,9 @@ import os
 import csv
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEvent, QItemSelectionModel
 from PySide6.QtWidgets import QStyleOptionViewItem
+from PySide6.QtGui import QKeyEvent
 
 sys.path.append(os.path.dirname(__file__)+'/..')
 from MyWidgets import MainWindow
@@ -102,6 +103,25 @@ def test_input(app):
     editor.setText('test_input')
     delegate.setModelData(editor, app.view.model(), index)
     assert app.view.model().dataContainer[0, 3] == 'test_input'
+
+
+def test_DeleteF(app, loadF):
+    view = app.view
+    model = view.model()
+    sModel = view.selectionModel()
+    sModel.select(
+        view.model().index(5, 8),
+        QItemSelectionModel.Select
+        )
+    dEvent = QKeyEvent(
+        QEvent.KeyPress,
+        Qt.Key_Delete,
+        Qt.NoModifier
+        )
+    view.keyPressEvent(dEvent)
+    formulas = model.formulas
+    assert (5, 8) not in formulas
+    assert model.data(model.index(5, 8)) == ''
 
 
 def test_order(app, loadF):
