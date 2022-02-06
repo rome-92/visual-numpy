@@ -50,10 +50,10 @@ class MyView(QTableView):
         self.hScrollBar = self.horizontalScrollBar()
         self.vScrollBar.actionTriggered.connect(self.addRow_)
         self.vScrollBar.actionTriggered.connect(
-            lambda:QTimer.singleShot(0, self.overlay.createRect))
+            lambda: QTimer.singleShot(0, self.overlay.createRect))
         self.hScrollBar.actionTriggered.connect(self.addColumn_)
         self.hScrollBar.actionTriggered.connect(
-            lambda:QTimer.singleShot(0, self.overlay.createRect))
+            lambda: QTimer.singleShot(0, self.overlay.createRect))
         self.vScrollBar.sliderMoved.connect(self.disableAddRow)
         self.hScrollBar.sliderMoved.connect(self.disableAddColumn)
         self.vScrollBar.sliderReleased.connect(self.enableAddRow)

@@ -26,6 +26,59 @@ def loadF(app):
     app.createNew()
 
 
+class TestIO:
+
+    def test_loadFile(self, app, name='/dependencies5.vnp'):
+        app.loadFile(dirname + name)
+        model = app.view.model()
+        assert model.formulas[5, 4].text == '[C6:C8]*2'
+        assert model.dataContainer[5, 5] == 4 + 0j
+        assert model.alignmentDict[5, 6] == int(
+            Qt.AlignHCenter | Qt.AlignVCenter)
+        assert model.fonts[4, 4].toString() == \
+            'FreeMono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
+        assert model.foreground[5, 5].color().name() == '#204a87'
+        assert model.background[4, 4].color().name() == '#e9b96e'
+
+    def test_importFile(self, app):
+        app.importFile(dirname + '/csv_sample.csv')
+        model = app.view.model()
+        model.thousandsSep = False
+        path = dirname + '/csv_sample.csv'
+        with open(path, encoding='latin', newline='') as myFile:
+            reader = csv.reader(myFile, dialect='excel')
+            for y, row in enumerate(reader):
+                for x, row in enumerate(row):
+                    try:
+                        number = complex(row)
+                        stored = complex(model.data(model.index(y, x)))
+                        assert number == stored
+
+                    except ValueError:
+                        assert row == model.data(model.index(y, x))
+
+    def test_fileExport(self, app, loadF):
+        app.fileExport('export_test')
+        model = app.view.model()
+        try:
+            with open('export_test.csv', encoding='latin', newline='') \
+                    as myFile:
+                reader = csv.reader(myFile, dialect='excel')
+                for y, row in enumerate(reader):
+                    for x, e in enumerate(row):
+                        index = model.index(y, x)
+                        assert e == model.data(index)
+        finally:
+            os.remove('export_test.csv')
+
+    def test_saveFileAs(self, app, loadF):
+        app.saveFileAs('testSaveFile')
+        try:
+            self.test_loadFile(app, 'testSaveFile.vnp')
+        finally:
+            os.remove('testSaveFile.vnp')
+
+
 @pytest.mark.parametrize(
     'index, expected', [
         ('A2', (1, 0)),
@@ -36,37 +89,6 @@ def loadF(app):
     )
 def test_getCoord(app, index, expected):
     assert app.getCoord(index) == expected
-
-
-def test_loadFile(app, name='/dependencies5.vnp'):
-    app.loadFile(dirname + name)
-    model = app.view.model()
-    assert model.formulas[5, 4].text == '[C6:C8]*2'
-    assert model.dataContainer[5, 5] == 4 + 0j
-    assert model.alignmentDict[5, 6] == int(
-        Qt.AlignHCenter | Qt.AlignVCenter)
-    assert model.fonts[4, 4].toString() == \
-        'FreeMono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
-    assert model.foreground[5, 5].color().name() == '#204a87'
-    assert model.background[4, 4].color().name() == '#e9b96e'
-
-
-def test_importFile(app):
-    app.importFile(dirname + '/csv_sample.csv')
-    model = app.view.model()
-    model.thousandsSep = False
-    path = dirname + '/csv_sample.csv'
-    with open(path, encoding='latin', newline='') as myFile:
-        reader = csv.reader(myFile, dialect='excel')
-        for y, row in enumerate(reader):
-            for x, row in enumerate(row):
-                try:
-                    number = complex(row)
-                    stored = complex(model.data(model.index(y, x)))
-                    assert number == stored
-
-                except ValueError:
-                    assert row == model.data(model.index(y, x))
 
 
 def test_createNew(app):
@@ -81,21 +103,7 @@ def test_createNew(app):
     assert len(model.background) == 0
 
 
-def test_fileExport(app, loadF):
-    app.fileExport('export_test')
-    model = app.view.model()
-    try:
-        with open('export_test.csv', encoding='latin', newline='') as myFile:
-            reader = csv.reader(myFile, dialect='excel')
-            for y, row in enumerate(reader):
-                for x, e in enumerate(row):
-                    index = model.index(y, x)
-                    assert e == model.data(index)
-    finally:
-        os.remove('export_test.csv')
-
-
-def test_input(app):
+def test_setModelData(app):
     index = app.view.model().index(0, 3)
     option = QStyleOptionViewItem()
     delegate = app.view.itemDelegateForIndex(index)
@@ -105,7 +113,7 @@ def test_input(app):
     assert app.view.model().dataContainer[0, 3] == 'test_input'
 
 
-def test_DeleteF(app, loadF):
+def test_Delete(app, loadF):
     view = app.view
     model = view.model()
     sModel = view.selectionModel()
@@ -141,11 +149,3 @@ def test_order(app, loadF):
     assert dataContainer[11, 4] == 6
     assert dataContainer[11, 5] == 20
     assert dataContainer[11, 6] == 29
-
-
-def test_saveFileAs(app, loadF):
-    app.saveFileAs('testSaveFile')
-    try:
-        test_loadFile(app, 'testSaveFile.vnp')
-    finally:
-        os.remove('testSaveFile.vnp')
