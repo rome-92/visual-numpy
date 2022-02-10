@@ -28,6 +28,7 @@ from PySide6.QtCore import (
     )
 
 import globals_
+import MyView
 
 
 class MyModel(QAbstractTableModel):
@@ -162,7 +163,7 @@ class MyModel(QAbstractTableModel):
                         )
                     if action == Qt.MoveAction:
                         if f := self.formulas.get((row, column), None):
-                            possibleF = self.parent().Formula(f)
+                            possibleF = MyView.Formula(f)
                             try:
                                 self.checkForCircularRef(
                                     possibleF,
