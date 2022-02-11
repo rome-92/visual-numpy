@@ -1030,6 +1030,9 @@ class MainWindow(QMainWindow):
                     globals_.historyIndex + len(self.view.model().history) + 1
                 self.view.model().history = self.view.model().history[:hIndex]
         domainDict = {}
+        pF = self.view.model().formulas.get(
+            (resultIndex[0], resultIndex[1]), None)
+        pText = pF.text if pF else ''
         if type(result) is np.ndarray:
             resultIndexRow = resultIndex[0]
             resultIndexColumn = resultIndex[1]
@@ -1040,7 +1043,7 @@ class MainWindow(QMainWindow):
                 domainDict['resultIndexColumn'] = resultIndexColumn
                 domainDict['resultRows'] = resultRows
                 domainDict['resultColumns'] = resultColumns
-                if not flag:
+                if not flag and text != pText:
                     try:
                         self.view.createFormula(
                             text, coords, scalarsIndexes, domainDict
@@ -1083,7 +1086,7 @@ class MainWindow(QMainWindow):
                 domainDict['resultIndexColumn'] = resultIndexColumn
                 domainDict['resultRows'] = resultRows
                 domainDict['resultColumns'] = resultColumns
-                if not flag:
+                if not flag and text != pText:
                     try:
                         self.view.createFormula(
                             text,
@@ -1122,7 +1125,7 @@ class MainWindow(QMainWindow):
             domainDict['resultIndexColumn'] = resultIndexColumn
             domainDict['resultRows'] = 1
             domainDict['resultColumns'] = 1
-            if not flag:
+            if not flag and text != pText:
                 try:
                     self.view.createFormula(
                         text,
