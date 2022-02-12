@@ -3,7 +3,7 @@ import os
 import csv
 
 import pytest
-from PySide6.QtCore import Qt, QEvent, QItemSelectionModel
+from PySide6.QtCore import Qt, QEvent, QItemSelectionModel, QItemSelection
 from PySide6.QtWidgets import QStyleOptionViewItem
 from PySide6.QtGui import QKeyEvent
 
@@ -149,3 +149,19 @@ def test_order(app, loadF):
     assert dataContainer[11, 4] == 6
     assert dataContainer[11, 5] == 20
     assert dataContainer[11, 6] == 29
+
+
+def test_moveValues(app, loadF):
+    view = app.view
+    model = view.model()
+    dataContainer = model.dataContainer
+    sModel = view.selectionModel()
+    selection = QItemSelection(model.index(5, 2), model.index(7, 2))
+    sModel.select(selection, QItemSelectionModel.ClearAndSelect)
+    app.cutAction()
+    view.setCurrentIndex(model.index(9, 2))
+    app.pasteAction()
+    assert dataContainer[9, 2] == 1
+    assert dataContainer[10, 2] == 2
+    assert dataContainer[11, 2] == 3
+    assert model.formulas[9, 2]
