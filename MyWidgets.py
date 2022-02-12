@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.6'
+version = '3.0.0-alpha.7'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 3
 
@@ -377,7 +377,7 @@ class MainWindow(QMainWindow):
                 (v.addressRow, v.addressColumn) for v in f[k].precedence}
         return f
 
-    def saveFileAs(self, name):
+    def saveFileAs(self, name=None):
         """Save file into .vnp format"""
         if not name:
             name, notUsed = QFileDialog.getSaveFileName(
