@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.7'
+version = '3.0.0-alpha.8'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 3
 
@@ -454,7 +454,7 @@ class MainWindow(QMainWindow):
             selected,
             flag='keepTopIndex'
             )
-        for action in self.actions():
+        for action in self.view.actions():
             if action.iconText() == 'Paste':
                 action.setDisabled(False)
 
