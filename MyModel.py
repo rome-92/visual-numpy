@@ -117,15 +117,15 @@ class MyModel(QAbstractTableModel):
             rightColumn = int(rightColumn)
             dropRow = parent.row()
             dropColumn = parent.column()
-            newRowDifference = dropRow - rowFromData
-            newColumnDifference = dropColumn - columnFromData
-            newBottomRow = bottomRow + newRowDifference
-            newBottomColumn = rightColumn + newColumnDifference
+            newRowDiff = dropRow - rowFromData
+            newColumnDiff = dropColumn - columnFromData
+            newBottomRow = bottomRow + newRowDiff
+            newBottomColumn = rightColumn + newColumnDiff
             selectionModel = self.parent().selectionModel()
             selectionModel.clearSelection()
             self.formulaSnap.update(self.formulas.values())
-            if newRowDifference > 0:
-                if newRowDifference >= (bottomRow - topRow + 1):
+            if newRowDiff > 0:
+                if newRowDiff >= (bottomRow - topRow + 1):
                     beginRow = topRow
                     endRow = bottomRow + 1
                     stepRow = 1
@@ -137,8 +137,8 @@ class MyModel(QAbstractTableModel):
                 beginRow = topRow
                 endRow = bottomRow + 1
                 stepRow = 1
-            if newColumnDifference > 0:
-                if newColumnDifference >= (rightColumn - leftColumn + 1):
+            if newColumnDiff > 0:
+                if newColumnDiff >= (rightColumn - leftColumn + 1):
                     beginColumn = leftColumn
                     endColumn = rightColumn + 1
                     stepColumn = 1
@@ -153,8 +153,8 @@ class MyModel(QAbstractTableModel):
             for row in range(beginRow, endRow, stepRow):
                 for column in range(beginColumn, endColumn, stepColumn):
                     movedIndex = self.index(
-                        row + newRowDifference,
-                        column + newColumnDifference
+                        row + newRowDiff,
+                        column + newColumnDiff
                         )
                     self.setData(
                         movedIndex,
@@ -167,8 +167,8 @@ class MyModel(QAbstractTableModel):
                             try:
                                 self.checkForCircularRef(
                                     possibleF,
-                                    newRowDifference,
-                                    newColumnDifference
+                                    newRowDiff,
+                                    newColumnDiff
                                     )
                             except Exception as e:
                                 print(e)
@@ -202,17 +202,17 @@ class MyModel(QAbstractTableModel):
         """Check circular reference when formula is to be dropped"""
         rowsDomain = []
         columnsDomain = []
-        newRowDifference = deltas[0]
-        newColumnDifference = deltas[1]
+        newRowDiff = deltas[0]
+        newColumnDiff = deltas[1]
         for index in formula.domain:
             rowsDomain.append(index[0])
             columnsDomain.append(index[1])
         topLeftDomain = [min(rowsDomain), min(columnsDomain)]
         bottomRightDomain = [max(rowsDomain), max(columnsDomain)]
-        topLeftDomain[0] = topLeftDomain[0] + newRowDifference
-        topLeftDomain[1] = topLeftDomain[1] + newColumnDifference
-        bottomRightDomain[0] = bottomRightDomain[0] + newRowDifference
-        bottomRightDomain[1] = bottomRightDomain[1] + newColumnDifference
+        topLeftDomain[0] = topLeftDomain[0] + newRowDiff
+        topLeftDomain[1] = topLeftDomain[1] + newColumnDiff
+        bottomRightDomain[0] = bottomRightDomain[0] + newRowDiff
+        bottomRightDomain[1] = bottomRightDomain[1] + newColumnDiff
         newDomain = []
         for row in range(
                 topLeftDomain[0], bottomRightDomain[0] + 1):
