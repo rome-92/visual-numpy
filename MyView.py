@@ -20,6 +20,7 @@
 
 import copy
 import weakref
+import gc
 
 from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QSize, QTimer
 from PySide6.QtWidgets import (
@@ -504,6 +505,7 @@ class MyView(QTableView):
                 self.model().setData(selIndex, '', mode='m')
                 rows.append(selIndex.row())
                 columns.append(selIndex.column())
+            gc.collect()
             if self.model().ftoapply:
                 main = self.parent()
                 order = main.topologicalSort(self.model().ftoapply)

@@ -20,6 +20,7 @@
 
 import copy
 import weakref
+import gc
 
 from PySide6.QtCore import (
     QAbstractTableModel, QMimeData, QByteArray,
@@ -162,8 +163,10 @@ class MyModel(QAbstractTableModel):
                         mode='m'
                         )
                     if action == Qt.MoveAction:
-                        if f := self.formulas.get((row, column), None):
-                            possibleF = MyView.Formula(f)
+                        if self.formulas.get((row, column), None):
+                            possibleF = MyView.Formula(
+                                self.formulas[row, column]
+                                )
                             try:
                                 self.checkForCircularRef(
                                     possibleF,
@@ -173,19 +176,30 @@ class MyModel(QAbstractTableModel):
                             except Exception as e:
                                 print(e)
                             else:
+                                origRow = possibleF.row - newRowDiff
+                                origCol = possibleF.col - newColumnDiff
+                                for f in self.ftoapply:
+                                    if f.row == origRow:
+                                        if f.col == origCol:
+                                            self.ftoapply.add(possibleF)
+                                            break
+                                f = None
                                 del self.formulas[row, column]
                                 self.formulas[
                                         possibleF.row,
                                         possibleF.col] = possibleF
-                        self.setData(
-                            self.index(row, column),
-                            '',
-                            mode='m', erase='n'
-                            )
+                                self.formulaSnap.update(self.formulas.values())
+                        if not self.formulas.get((row, column)):
+                            self.setData(
+                                self.index(row, column),
+                                '',
+                                mode='m'
+                                )
                     selectionModel.select(
                         movedIndex,
                         QItemSelectionModel.Select
                         )
+            gc.collect()
             if self.ftoapply:
                 main = self.parent().parent()
                 order = main.topologicalSort(self.ftoapply)
@@ -353,15 +367,16 @@ class MyModel(QAbstractTableModel):
                 return True
             if value != '':
                 self.dataContainer[(index.row(), index.column())] = value
-            else:
-                del self.dataContainer[index.row(), index.column()]
+            elif erase == 'y':
+                if (index.row(), index.column()) in self.dataContainer:
+                    del self.dataContainer[index.row(), index.column()]
             try:
                 assert self.formulas
             except AssertionError:
                 return True
             if mode == 'm':
                 if erase == 'y':
-                    if f := self.formulas.get(
+                    if self.formulas.get(
                             (index.row(), index.column()), None):
                         del self.formulas[index.row(), index.column()]
                 for f in self.formulaSnap.copy():
@@ -370,7 +385,7 @@ class MyModel(QAbstractTableModel):
                         self.formulaSnap.remove(f)
             elif mode == 's':
                 if erase == 'y':
-                    if f := self.formulas.get(
+                    if self.formulas.get(
                             (index.row(), index.column()), None):
                         del self.formulas[index.row(), index.column()]
                 for f in self.formulas.values():
