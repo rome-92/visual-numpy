@@ -360,8 +360,8 @@ class MyView(QTableView):
         """Check for circular references"""
         if possibleF in precedence:
             raise CircularReferenceError(
-                possibleF.addressRow,
-                possibleF.addressColumn
+                possibleF.row,
+                possibleF.col
                 )
         else:
             for f in precedence:
@@ -699,16 +699,16 @@ class Formula():
         """Constructor for Formula object"""
         if len(args) > 1:
             self.text = args[0]
-            self.addressRow = args[1][0]
-            self.addressColumn = args[1][1]
+            self.row = args[1][0]
+            self.col = args[1][1]
             self.indexes = tuple(args[2])
             self.domain = tuple(args[3])
             self.precedence = args[4]
             self.subsequent = args[5]
         elif len(args) == 1:
             self.text = args[0].text
-            self.addressRow = args[0].addressRow
-            self.addressColumn = args[0].addressColumn
+            self.row = args[0].row
+            self.col = args[0].col
             self.indexes = args[0].indexes
             self.domain = args[0].domain
             self.precedence = args[0].precedence

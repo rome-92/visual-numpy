@@ -175,8 +175,8 @@ class MyModel(QAbstractTableModel):
                             else:
                                 del self.formulas[row, column]
                                 self.formulas[
-                                        possibleF.addressRow,
-                                        possibleF.addressColumn] = possibleF
+                                        possibleF.row,
+                                        possibleF.col] = possibleF
                         self.setData(
                             self.index(row, column),
                             '',
@@ -223,7 +223,7 @@ class MyModel(QAbstractTableModel):
         newDomainSet = set(newDomain)
         if formulaIndexesSet.intersection(newDomainSet):
             raise CircularReferenceError(
-                formula.addressRow, formula.addressColumn
+                formula.row, formula.col
                 )
         formula.precedence.clear()
         for f_ in self.formulas.values():
@@ -236,13 +236,13 @@ class MyModel(QAbstractTableModel):
                 f_.precedence.add(formula)
         if formula.precedence.intersection(formula.subsequent):
             raise CircularReferenceError(
-                formula.addressRow,
-                formula.addressColumn
+                formula.row,
+                formula.col
                 )
         self.parent().circularReferenceCheck(formula.precedence, formula)
         formula.domain = newDomain
-        formula.addressRow = formula.addressRow + newRowDifference
-        formula.addressColumn = formula.addressColumn + newColumnDifference
+        formula.row = formula.row + newRowDiff
+        formula.col = formula.col + newColumnDiff
 
     def columnCount(self, parent=QModelIndex()):
         """Return number of columns"""

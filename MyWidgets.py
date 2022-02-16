@@ -50,7 +50,7 @@ import globals_
 
 version = '3.0.0-alpha.9'
 MAGIC_NUMBER = 0x2384E
-FILE_VERSION = 3
+FILE_VERSION = 4
 
 
 class MainWindow(QMainWindow):
@@ -372,9 +372,9 @@ class MainWindow(QMainWindow):
         """Substitute weakrefs objects for pickling"""
         for k in f:
             f[k].subsequent = {
-                (v.addressRow, v.addressColumn) for v in f[k].subsequent}
+                (v.row, v.col) for v in f[k].subsequent}
             f[k].precedence = {
-                (v.addressRow, v.addressColumn) for v in f[k].precedence}
+                (v.row, v.col) for v in f[k].precedence}
         return f
 
     def saveFileAs(self, name=None):
@@ -1172,8 +1172,8 @@ class MainWindow(QMainWindow):
         for f in formulas:
             self.calculate(
                 f.text,
-                f.addressRow,
-                f.addressColumn,
+                f.row,
+                f.col,
                 flag=True
                 )
 
