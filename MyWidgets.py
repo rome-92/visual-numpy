@@ -399,6 +399,8 @@ class MainWindow(QMainWindow):
             formulas = copy.deepcopy(self.view.model().formulas)
             self.prepareFormulas(formulas)
             with open(name+'.vnp', 'wb') as myFile:
+                pickle.dump(MAGIC_NUMBER, myFile)
+                pickle.dump(FILE_VERSION, myFile)
                 pickle.dump(model, myFile)
                 pickle.dump(formulas, myFile)
                 pickle.dump(alignment, myFile)
