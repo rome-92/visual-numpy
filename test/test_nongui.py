@@ -72,11 +72,12 @@ class TestIO:
             os.remove('export_test.csv')
 
     def test_saveFileAs(self, app, loadF):
-        app.saveFileAs('testSaveFile')
+        app.saveFileAs(dirname + '/testSaveFile')
+        app.createNew()
         try:
-            self.test_loadFile(app, 'testSaveFile.vnp')
+            self.test_loadFile(app, '/testSaveFile.vnp')
         finally:
-            os.remove('testSaveFile.vnp')
+            os.remove(dirname + '/testSaveFile.vnp')
 
 
 @pytest.mark.parametrize(
@@ -165,3 +166,19 @@ def test_moveValues(app, loadF):
     assert dataContainer[10, 2] == 2
     assert dataContainer[11, 2] == 3
     assert model.formulas[9, 2]
+
+
+def test_createFormula(app):
+    view = app.view
+    model = view.model()
+    sModel = view.selectionModel()
+    sModel.select(model.index(0, 0), QItemSelectionModel.ClearAndSelect)
+    command = app.commandLineEdit
+    command.setText('= np.arange(10)')
+    event = QKeyEvent(
+        QEvent.KeyPress,
+        Qt.Key_Return,
+        Qt.NoModifier
+        )
+    command.event(event)
+    assert model.formulas[0, 0]
