@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.10'
+version = '3.0.0-alpha.11'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 4
 
@@ -1236,8 +1236,3 @@ class CommandLineEdit(QLineEdit):
         """Default focus in behaviour"""
         super().focusInEvent(event)
         globals_.formula_mode = True
-
-    def focusOutEvent(self, event):
-        """Default focus out behaviour"""
-        super().focusOutEvent(event)
-        globals_.formula_mode = False
