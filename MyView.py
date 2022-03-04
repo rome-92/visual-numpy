@@ -306,16 +306,16 @@ class MyView(QTableView):
         if scalars:
             indexes += scalars
         domainIndexes = []
-        resultIndexRow = domain['resultIndexRow']
-        resultRows = domain['resultRows']
-        resultIndexColumn = domain['resultIndexColumn']
-        resultColumns = domain['resultColumns']
-        address = resultIndexRow, resultIndexColumn
-        for row in range(resultIndexRow, resultIndexRow+resultRows):
+        rowIdx = domain['rowIdx']
+        nRows = domain['nRows']
+        colIdx = domain['colIdx']
+        nCols = domain['nCols']
+        address = rowIdx, colIdx
+        for row in range(rowIdx, rowIdx+nRows):
             for column in range(
-                    resultIndexColumn,
-                    resultIndexColumn
-                    + resultColumns):
+                    colIdx,
+                    colIdx
+                    + nCols):
                 domainIndexes.append((row, column))
         possibleF = Formula(
             text,
@@ -328,7 +328,7 @@ class MyView(QTableView):
         indexesSet = set(indexes)
         domainIndexesSet = set(domainIndexes)
         if indexesSet.intersection(domainIndexesSet):
-            raise CircularReferenceError(resultIndexRow, resultIndexColumn)
+            raise CircularReferenceError(rowIdx, colIdx)
         if self.model().formulas:
             for f_ in self.model().formulas.values():
                 formulaIndexSet = set(f_.indexes)
@@ -341,20 +341,20 @@ class MyView(QTableView):
                     f_.precedence.add(possibleF)
                 if possibleF.precedence.intersection(possibleF.subsequent):
                     raise CircularReferenceError(
-                            resultIndexRow,
-                            resultIndexColumn
+                            rowIdx,
+                            colIdx
                             )
             self.circularReferenceCheck(possibleF.precedence, possibleF)
             if f_ := self.model().formulas.get(
-                    (resultIndexRow, resultIndexColumn), None):
+                    (rowIdx, colIdx), None):
                 if f_.text != text:
-                    self.model().formulas[resultIndexRow, resultIndexColumn]\
+                    self.model().formulas[rowIdx, colIdx]\
                         = possibleF
             else:
-                self.model().formulas[resultIndexRow, resultIndexColumn] \
+                self.model().formulas[rowIdx, colIdx] \
                     = possibleF
         else:
-            self.model().formulas[resultIndexRow, resultIndexColumn] \
+            self.model().formulas[rowIdx, colIdx] \
                 = possibleF
 
     def circularReferenceCheck(self, precedence, possibleF):
@@ -528,25 +528,41 @@ class MyView(QTableView):
                 self.redo()
             elif event.key() == Qt.Key_Return:
                 if selected := self.selectionModel().selectedIndexes():
-                    index2copy = selected[0]
-                    data2copy = self.model().dataContainer[
-                        index2copy.row(),
-                        index2copy.column()
-                        ]
-                    self.model().formulaSnap.update(
-                        self.model().formulas.values()
-                        )
-                    for ind in selected[1:]:
-                        self.model().setData(
-                            ind, data2copy, mode='m'
+                    if len(selected) > 1:
+                        index2copy = selected[0]
+                        data2copy = self.model().dataContainer[
+                            index2copy.row(),
+                            index2copy.column()
+                            ]
+                        self.model().formulaSnap.update(
+                            self.model().formulas.values()
                             )
-                    if self.model().ftoapply:
-                        main = self.parent()
-                        order = main.topologicalSort(self.ftoapply)
-                        main.executeOrder(order)
-                        self.model().ftoapply.clear()
-                    self.saveToHistory()
-                    self.model().dataChanged.emit(selected[0], selected[-1])
+                        for ind in selected[1:]:
+                            self.model().setData(
+                                ind, data2copy, mode='m'
+                                )
+                        if self.model().ftoapply:
+                            main = self.parent()
+                            order = main.topologicalSort(self.ftoapply)
+                            main.executeOrder(order)
+                            self.model().ftoapply.clear()
+                        self.saveToHistory()
+                        self.model().dataChanged.emit(
+                            selected[0],
+                            selected[-1])
+                    elif len(selected) == 1:
+                        rowIdx = selected[0].row()
+                        colIdx = selected[0].column()
+                        if (fcomp := self.model().formulas.get(
+                                (rowIdx, colIdx), 'null')) != 'null':
+                            main = self.parent()
+                            main.calculate(
+                                fcomp.text,
+                                rowIdx,
+                                colIdx,
+                                com=True
+                                )
+
             else:
                 super().keyPressEvent(event)
         elif event.key() == Qt.Key_F6:

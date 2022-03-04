@@ -323,6 +323,9 @@ class MyModel(QAbstractTableModel):
                     return str(returnValue).strip('()')
             except ValueError:
                 return returnValue
+            except TypeError:
+                if hasattr(returnValue, 'ndim'):
+                    return f'array {returnValue.shape}'
         if role == Qt.BackgroundRole:
             if self.highlight:
                 if index.row() == self.highlight[0][0]:

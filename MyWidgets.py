@@ -48,7 +48,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.11'
+version = '3.0.0-alpha.12'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 4
 
@@ -248,7 +248,8 @@ class MainWindow(QMainWindow):
             self.underlineAction
             ])
         self.addToolBar(Qt.TopToolBarArea, formatToolbar)
-        self.commandLineEdit.returnCommand.connect(self.calculate)
+        self.commandLineEdit.returnCommand.connect(
+            lambda t, row, col, c: self.calculate(t, row, col, com=c))
         self.statusBar()
         self.setStyleSheet(self.styleSheet)
         globals_.currentFont = QFont(self.fontsComboBox.currentFont())
@@ -965,12 +966,13 @@ class MainWindow(QMainWindow):
         row = int(numbers)-1
         return row, column
 
-    def calculate(self, text, *resultIndex, flag=False):
+    def calculate(self, text, *ridx, com=False, flag=False):
         """Format string into python executable code and evaluate"""
         print(text)
         arrays = globals_.REGEXP1.findall(text)
         coords = []
         numpyArrayList = []
+        model = self.view.model()
         for array in arrays:
             topLeft, bottomRight = globals_.REGEXP2.findall(array)
             r1, c1 = self.getCoord(topLeft)
@@ -983,7 +985,7 @@ class MainWindow(QMainWindow):
             array = np.zeros((height, width), np.complex_)
             for y, row in enumerate(range(rows[0], rows[1])):
                 for x, column in enumerate(range(columns[0], columns[1])):
-                    element = self.view.model().dataContainer.get(
+                    element = model.dataContainer.get(
                         (row, column),
                         0
                         )
@@ -1004,23 +1006,40 @@ class MainWindow(QMainWindow):
         commandExecutable = globals_.REGEXP1.sub('{}', text)
         idPool = list(idPool)
         for i1, i2 in zip(idPool, numpyArrayList):
-            exec(i1+'= i2')
+            exec(i1 + '= i2')
         commandExecutable = commandExecutable.format(*idPool)
-        scalars = globals_.REGEXP2.findall(commandExecutable)
-        scalarsIndexes = []
-        scalarNumbers = []
-        for scalar in scalars:
-            r, c = self.getCoord(scalar)
-            scalarsIndexes.append((r, c))
-            number = self.view.model().dataContainer.get((r, c), '0')
-            try:
-                complex(number)
-            except Exception as e:
-                print(e, number)
-                return
-            scalarNumbers.append(number)
+        single = globals_.REGEXP2.findall(commandExecutable)
+        singleIndexes = []
+        singleElements = []
+        idPool2 = set()
+        for s in single:
+            r, c = self.getCoord(s)
+            singleIndexes.append((r, c))
+            element = model.dataContainer.get((r, c), '0')
+            if isinstance(element, np.ndarray):
+                gen = (
+                    'w_'
+                    + str(random.randint(0, 255))
+                    + str(random.randint(0, 255))
+                    )
+                while gen in idPool2:
+                    gen = (
+                        'w_'
+                        + str(random.randint(0, 255))
+                        + str(random.randint(0, 255))
+                        )
+                idPool2.add(gen)
+                exec(gen + '= element')
+                singleElements.append(gen)
+            else:
+                try:
+                    complex(element)
+                except Exception as e:
+                    print(e, element)
+                    return
+                singleElements.append(element)
         commandExecutable = globals_.REGEXP2.sub('{}', commandExecutable)
-        commandExecutable = commandExecutable.format(*scalarNumbers)
+        commandExecutable = commandExecutable.format(*singleElements)
         try:
             result = eval(commandExecutable)
         except Exception as e:
@@ -1029,26 +1048,72 @@ class MainWindow(QMainWindow):
         if not flag:
             if globals_.historyIndex != -1:
                 hIndex = \
-                    globals_.historyIndex + len(self.view.model().history) + 1
-                self.view.model().history = self.view.model().history[:hIndex]
-        domainDict = {}
-        pF = self.view.model().formulas.get(
-            (resultIndex[0], resultIndex[1]), None)
+                    globals_.historyIndex + len(model.history) + 1
+                model.history = model.history[:hIndex]
+        domain = {}
+        pF = model.formulas.get(
+            (ridx[0], ridx[1]), None)
         pText = pF.text if pF else ''
+        invert = False
         if type(result) is np.ndarray:
-            resultIndexRow = resultIndex[0]
-            resultIndexColumn = resultIndex[1]
-            if len(result.shape) == 2:
-                resultRows = result.shape[0]
-                resultColumns = result.shape[1]
-                domainDict['resultIndexRow'] = resultIndexRow
-                domainDict['resultIndexColumn'] = resultIndexColumn
-                domainDict['resultRows'] = resultRows
-                domainDict['resultColumns'] = resultColumns
-                if not flag and text != pText:
+            rowIdx = ridx[0]
+            colIdx = ridx[1]
+            if com and result.ndim > 0:
+                invert = True
+                prev = model.dataContainer.get((rowIdx, colIdx), 'null')
+                if prev != 'null':
+                    if isinstance(prev, np.ndarray):
+                        com = False
+                        self.clean(
+                            rowIdx,
+                            colIdx,
+                            1,
+                            1)
+                    else:
+                        if len(result.shape) > 1:
+                            x_cols = result.shape[1]
+                        else:
+                            x_cols = 1
+                        self.clean(
+                            rowIdx,
+                            colIdx,
+                            result.shape[0],
+                            x_cols
+                            )
+            if com and result.ndim <= 2:
+                domain['rowIdx'] = rowIdx
+                domain['colIdx'] = colIdx
+                domain['nRows'] = 1
+                domain['nCols'] = 1
+                if not flag and text != pText or invert:
                     try:
                         self.view.createFormula(
-                            text, coords, scalarsIndexes, domainDict
+                            text,
+                            coords,
+                            singleIndexes,
+                            domain
+                            )
+                    except Exception as e:
+                        traceback.print_tb(e.__traceback__)
+                        print(e)
+                        return
+                startIndex = model.index(rowIdx, colIdx)
+                endIndex = startIndex
+                model.setData(
+                    model.index(rowIdx, colIdx),
+                    result,
+                    mode='a')
+            elif len(result.shape) == 2:
+                nRows = result.shape[0]
+                nCols = result.shape[1]
+                domain['rowIdx'] = rowIdx
+                domain['colIdx'] = colIdx
+                domain['nRows'] = nRows
+                domain['nCols'] = nCols
+                if not flag and text != pText or invert:
+                    try:
+                        self.view.createFormula(
+                            text, coords, singleIndexes, domain
                             )
                     except Exception as e:
                         traceback.print_tb(e.__traceback__)
@@ -1056,118 +1121,139 @@ class MainWindow(QMainWindow):
                         return
                 for line, rY in zip(
                         result,
-                        range(resultIndexRow, resultIndexRow+resultRows)):
+                        range(rowIdx, rowIdx+nRows)):
                     for dE, cX in zip(
                             line,
                             range(
-                                resultIndexColumn,
-                                resultIndexColumn
-                                + resultColumns)):
-                        ind = self.view.model().createIndex(rY, cX)
-                        self.view.model().setData(
+                                colIdx,
+                                colIdx
+                                + nCols)):
+                        ind = model.createIndex(rY, cX)
+                        model.setData(
                             ind,
                             globals_.currentFont,
                             role=Qt.FontRole
                             )
-                        self.view.model().setData(
+                        model.setData(
                             ind,
                             dE,
                             mode='a'
                             )
-                startIndex = self.view.model().index(
-                    resultIndexRow,
-                    resultIndexColumn
+                startIndex = model.index(
+                    rowIdx,
+                    colIdx
                     )
-                endIndex = self.view.model().index(
-                    resultIndexRow+resultRows-1,
-                    resultIndexColumn+resultColumns-1)
+                endIndex = model.index(
+                    rowIdx+nRows-1,
+                    colIdx+nCols-1)
             elif len(result.shape) == 1:
-                resultRows = result.shape[0]
-                resultColumns = 1
-                domainDict['resultIndexRow'] = resultIndexRow
-                domainDict['resultIndexColumn'] = resultIndexColumn
-                domainDict['resultRows'] = resultRows
-                domainDict['resultColumns'] = resultColumns
-                if not flag and text != pText:
+                nRows = result.shape[0]
+                nCols = 1
+                domain['rowIdx'] = rowIdx
+                domain['colIdx'] = colIdx
+                domain['nRows'] = nRows
+                domain['nCols'] = nCols
+                if not flag and text != pText or invert:
                     try:
                         self.view.createFormula(
                             text,
                             coords,
-                            scalarsIndexes,
-                            domainDict)
+                            singleIndexes,
+                            domain)
                     except Exception as e:
                         traceback.print_tb(e.__traceback__)
                         print(e)
                         return
                 for row, ry in zip(
                         result,
-                        range(resultIndexRow, resultIndexRow+resultRows)):
-                    ind = self.view.model().createIndex(ry, resultIndexColumn)
-                    self.view.model().setData(
+                        range(rowIdx, rowIdx+nRows)):
+                    ind = model.createIndex(ry, colIdx)
+                    model.setData(
                         ind,
                         globals_.currentFont,
                         role=Qt.FontRole
                         )
-                    self.view.model().setData(ind, row, mode='a')
-                startIndex = self.view.model().index(
-                    resultIndexRow,
-                    resultIndexColumn
+                    model.setData(ind, row, mode='a')
+                startIndex = model.index(
+                    rowIdx,
+                    colIdx
                     )
-                endIndex = self.view.model().index(
-                    resultIndexRow+resultRows-1,
-                    resultIndexColumn)
+                endIndex = model.index(
+                    rowIdx+nRows-1,
+                    colIdx)
             else:
                 return
-            self.view.model().dataChanged.emit(startIndex, endIndex)
+            model.dataChanged.emit(startIndex, endIndex)
             self.commandLineEdit.clearFocus()
         elif isinstance(result, numbers.Number):
-            resultIndexRow = resultIndex[0]
-            resultIndexColumn = resultIndex[1]
-            domainDict['resultIndexRow'] = resultIndexRow
-            domainDict['resultIndexColumn'] = resultIndexColumn
-            domainDict['resultRows'] = 1
-            domainDict['resultColumns'] = 1
+            rowIdx = ridx[0]
+            colIdx = ridx[1]
+            domain['rowIdx'] = rowIdx
+            domain['colIdx'] = colIdx
+            domain['nRows'] = 1
+            domain['nCols'] = 1
             if not flag and text != pText:
                 try:
                     self.view.createFormula(
                         text,
                         coords,
-                        scalarsIndexes,
-                        domainDict
+                        singleIndexes,
+                        domain
                         )
                 except Exception as e:
                     traceback.print_tb(e.__traceback__)
                     print(e)
                     return
-            startIndex = self.view.model().createIndex(
-                resultIndexRow,
-                resultIndexColumn
+            startIndex = model.createIndex(
+                rowIdx,
+                colIdx
                 )
             endIndex = startIndex
-            self.view.model().setData(
+            model.setData(
                 startIndex,
                 globals_.currentFont,
                 role=Qt.FontRole
                 )
-            self.view.model().setData(
+            model.setData(
                 startIndex,
                 result,
                 mode='a'
                 )
-            self.view.model().dataChanged.emit(startIndex, endIndex)
+            model.dataChanged.emit(startIndex, endIndex)
             self.commandLineEdit.clearFocus()
-        currentFormula = self.view.model().formulas[
-            resultIndex[0],
-            resultIndex[1]
+        currentFormula = model.formulas[
+            ridx[0],
+            ridx[1]
             ]
         if not flag:
             ordered = self.topologicalSort(currentFormula.precedence)
             self.executeOrder(ordered)
-            self.view.model().ftoapply.clear()
+            model.ftoapply.clear()
+            model.formulaSnap.clear()
             self.view.saveToHistory()
         else:
             self.view.saveToHistory()
         self.view.setFocus()
+
+    def clean(self, x, y, rows, cols):
+        """Delete data and formulas to prepare for new formula"""
+        model = self.view.model()
+        model.formulaSnap.update(model.formulas.values())
+        for r in range(x, x + rows):
+            for c in range(y, y + cols):
+                model.setData(
+                    model.index(r, c),
+                    '',
+                    mode='m',
+                    erase='y',
+                    )
+        if rows > 1 or cols > 1:
+            if model.ftoapply:
+                ordered = self.topologicalSort(model.ftoapply)
+                self.executeOrder(ordered)
+        startIndex = model.index(x, y)
+        endIndex = model.index(x + rows, y + cols)
+        model.dataChanged.emit(startIndex, endIndex)
 
     def executeOrder(self, formulas):
         """Execute formulas in order"""
@@ -1200,7 +1286,7 @@ class MainWindow(QMainWindow):
 
 class CommandLineEdit(QLineEdit):
     """Handle expression and emit corresponding signals"""
-    returnCommand = Signal(str, int, int)
+    returnCommand = Signal(str, int, int, bool)
 
     def event(self, event):
         if event.type() == QEvent.KeyPress:
@@ -1217,13 +1303,16 @@ class CommandLineEdit(QLineEdit):
                     return super().event(event)
             elif event.key() == Qt.Key_Return or \
                     event.key() == Qt.Key_Enter:
+                compact = False
+                if event.modifiers() == Qt.ControlModifier:
+                    compact = True
                 if self.text().startswith("="):
                     globals_.formula_mode = False
                     eval_ = self.text().partition("=")[2]
                     row = self.currentIndex.row()
                     column = self.currentIndex.column()
                     self.parent().parent().view.model().highlight = None
-                    self.returnCommand.emit(eval_, row, column)
+                    self.returnCommand.emit(eval_, row, column, compact)
                     return True
                 else:
                     return super().event(event)
