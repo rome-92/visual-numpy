@@ -33,7 +33,6 @@ from PySide6.QtWidgets import (
     QLabel, QFileDialog, QMessageBox,
     QFontComboBox, QComboBox, QColorDialog,
     QPushButton, QVBoxLayout, QWidget,
-    QDialog
     )
 from PySide6.QtGui import (
     QAction, QGuiApplication,
@@ -999,7 +998,7 @@ class MainWindow(QMainWindow):
         print(x, y)
         self.plotWidget = PlotWidget()
         self.plotWidget.show()
-        self.plotWidget.ax.plot(x,y)
+        self.plotWidget.ax.plot(x, y)
 
     def helpAbout(self):
         """Show about dialog"""
@@ -1402,7 +1401,7 @@ class PlotWidget(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         layout = QVBoxLayout(self)
-        static_canvas = FigureCanvas(Figure(figsize=(5,3)))
-        layout.addWidget(NavigationToolbar(static_canvas,self))
+        static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        layout.addWidget(NavigationToolbar(static_canvas, self))
         layout.addWidget(static_canvas)
         self.ax = static_canvas.figure.subplots()

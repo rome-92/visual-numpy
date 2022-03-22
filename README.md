@@ -10,6 +10,10 @@ Get the prerequisites:
 - PySide6 (>=6.0)
 - numpy (>=1.15)
 
+Optional:
+
+- matplotlib (>=3.5.1) Provides plot functionality (early development)
+
 Note: If using Ubuntu other than LTS 20.04 installing pyside6 via pip could resort to some needed libraries missing. In this case be sure to install all missing libraries separately.
 
 ## Installation
