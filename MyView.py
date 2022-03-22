@@ -565,9 +565,6 @@ class MyView(QTableView):
 
             else:
                 super().keyPressEvent(event)
-        elif event.key() == Qt.Key_F6:
-            for f in self.model().formulas.values():
-                print(f, f.precedence, f.subsequent)
         else:
             super().keyPressEvent(event)
         self.model().formulaSnap.clear()

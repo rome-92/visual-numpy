@@ -32,7 +32,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QLineEdit, QToolBar,
     QLabel, QFileDialog, QMessageBox,
     QFontComboBox, QComboBox, QColorDialog,
-    QPushButton
+    QPushButton, QVBoxLayout, QWidget,
+    QDialog
     )
 from PySide6.QtGui import (
     QAction, QGuiApplication,
@@ -40,6 +41,16 @@ from PySide6.QtGui import (
     QPixmap, QBrush, QColor)
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
+try:
+    from matplotlib.backends.backend_qtagg import (
+        FigureCanvas,
+        NavigationToolbar2QT as NavigationToolbar
+        )
+    from matplotlib.figure import Figure
+except ImportError:
+    PLOT = False
+else:
+    PLOT = True
 import numpy as np
 
 from MyView import MyView
@@ -186,7 +197,16 @@ class MainWindow(QMainWindow):
         saveArrayAs.setShortcut('Ctrl+J')
         saveArrayAs.setStatusTip('Save Array in .npy format')
         saveArrayAs.triggered.connect(self.saveArrayAs)
-        self.view.addActions((copy, cut, paste, merge, unmerge, saveArrayAs))
+        plot = QAction('P&lot', self)
+        plot.setShortcut('Ctrl+L')
+        plot.setStatusTip('Plot given x and y arrays')
+        plot.triggered.connect(self.plot)
+        self.view.addActions((
+            copy, cut, paste, merge, unmerge, saveArrayAs,
+            plot
+            ))
+        if not PLOT:
+            plot.setDisabled(True)
         self.alignmentGroup1 = QActionGroup(self)
         self.alignmentGroup1.addAction(self.alignL)
         self.alignmentGroup1.addAction(self.alignC)
@@ -931,6 +951,56 @@ class MainWindow(QMainWindow):
         self.view.model().dataChanged.emit(selected[0], selected[-1])
         self.view.saveToHistory()
 
+    def plot(self):
+        model = self.view.model()
+        selected = self.view.selectedIndexes()
+        rows = []
+        columns = []
+        if not selected:
+            return
+        if len(selected) == 2:
+            x_r, x_c = selected[0].row(), selected[0].column()
+            y_r, y_c = selected[1].row(), selected[1].column()
+            x_ = model.dataContainer[x_r, x_c]
+            y_ = model.dataContainer[y_r, y_c]
+            if type(x_) is np.ndarray and type(y_) is np.ndarray:
+                x = x_
+                y = y_
+            else:
+                return
+        else:
+            for index in selected:
+                rows.append(index.row())
+                columns.append(index.column())
+            topRow = min(rows)
+            leftColumn = min(columns)
+            bottomRow = max(rows)
+            rightColumn = max(columns)
+            height = bottomRow - topRow + 1
+            width = rightColumn - leftColumn + 1
+            if width > 2:
+                return
+            if height * width == len(selected):
+                x = np.zeros((height), dtype=np.float)
+                y = np.zeros((height), dtype=np.float)
+                for ry, r in enumerate(range(topRow, bottomRow+1)):
+                    for cx, c in enumerate(range(leftColumn, rightColumn+1)):
+                        try:
+                            number = complex(model.dataContainer[r, c])
+                        except ValueError as e:
+                            print(e)
+                            return
+                        else:
+                            if cx == 0:
+                                x[ry] = number.real
+                            else:
+                                y[ry] = number.real
+        print('printing x, y')
+        print(x, y)
+        self.plotWidget = PlotWidget()
+        self.plotWidget.show()
+        self.plotWidget.ax.plot(x,y)
+
     def helpAbout(self):
         """Show about dialog"""
         QMessageBox.about(
@@ -1325,3 +1395,14 @@ class CommandLineEdit(QLineEdit):
         """Default focus in behaviour"""
         super().focusInEvent(event)
         globals_.formula_mode = True
+
+
+class PlotWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        layout = QVBoxLayout(self)
+        static_canvas = FigureCanvas(Figure(figsize=(5,3)))
+        layout.addWidget(NavigationToolbar(static_canvas,self))
+        layout.addWidget(static_canvas)
+        self.ax = static_canvas.figure.subplots()
