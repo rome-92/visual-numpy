@@ -28,6 +28,7 @@ POINT_SIZES = [
     '36', '40', '44', '48', '54', '60',
     '66', '72', '80', '88', '96'
     ]
+GRAPH_TYPES = ['plot', 'scatter', 'bar', 'histogram', 'pie']
 currentFont = None
 defaultFont = None
 defaultForeground = None

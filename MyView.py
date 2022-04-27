@@ -111,10 +111,10 @@ class MyView(QTableView):
         selectionModel = self.selectionModel()
         selectedIndexes = selectionModel.selectedIndexes()
         if not globals_.formula_mode:
-            commandLineEdit = self.parent().commandLineEdit
-            commandLineEdit.clear()
+            lineEdit = self.parent().commandLineEdit
+            lineEdit.clear()
             if len(selectedIndexes) == 1:
-                commandLineEdit.currentIndex = selectedIndexes[0]
+                lineEdit.currentIndex = selectedIndexes[0]
                 for action in self.actions():
                     if action.objectName() == 'merge':
                         action.setDisabled(True)
@@ -162,7 +162,7 @@ class MyView(QTableView):
                     self.parent().alignM.setChecked(True)
                 if f := self.model().formulas.get(
                         (index.row(), index.column()), None):
-                    self.parent().commandLineEdit.setText('='+f.text)
+                    lineEdit.setText('='+f.text)
                     globals_.domainHighlight = True
                     for d in f.domain:
                         coloredIndex = self.model().index(d[0], d[1])
@@ -175,13 +175,19 @@ class MyView(QTableView):
                 for action in self.actions():
                     if action.objectName() == 'merge':
                         action.setEnabled(True)
-        elif globals_.formula_mode:
+        if globals_.formula_mode or self.parent().plotMenu:
+            if globals_.formula_mode:
+                lineEdit = self.parent().commandLineEdit
+            elif self.parent().plotMenu.conf.activeLE:
+                lineEdit = self.parent().plotMenu.conf.activeLE
+            else:
+                self.overlay.createRect()
+                return super().selectionChanged(selected, deselected)
             if len(selectedIndexes) == 1:
-                commandLineEdit = self.parent().commandLineEdit
-                cursorPosition = commandLineEdit.cursorPosition()
+                cursorPosition = lineEdit.cursorPosition()
                 model = self.model()
-                text0 = commandLineEdit.text()[:cursorPosition]
-                text1 = commandLineEdit.text()[cursorPosition:]
+                text0 = lineEdit.text()[:cursorPosition]
+                text1 = lineEdit.text()[cursorPosition:]
                 row = self.currentIndex().row()
                 column = self.currentIndex().column()
                 if globals_.REGEXP3.search(text0):
@@ -190,48 +196,47 @@ class MyView(QTableView):
                         text0
                         )
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
+                        lineEdit.setCursorPosition(cursorPosition)
                 elif globals_.REGEXP4.search(text0):
                     newText = globals_.REGEXP4.sub(
                         model.getAlphanumeric(column, row),
                         text0
                         )
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
-                elif text0 == '=':
+                        lineEdit.setCursorPosition(cursorPosition)
+                elif text0 == '=' or text0.startswith(''):
                     newText = text0 + model.getAlphanumeric(column, row)
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
+                        lineEdit.setCursorPosition(cursorPosition)
                 elif text0.endswith(('*', '+', '-', '/', '(', ',')):
                     newText = text0 + model.getAlphanumeric(column, row)
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
-                commandLineEdit.setFocus(Qt.OtherFocusReason)
-                commandLineEdit.deselect()
+                        lineEdit.setCursorPosition(cursorPosition)
+                lineEdit.setFocus(Qt.OtherFocusReason)
+                lineEdit.deselect()
             else:
                 rows = []
                 columns = []
-                commandLineEdit = self.parent().commandLineEdit
-                cursorPosition = commandLineEdit.cursorPosition()
+                cursorPosition = lineEdit.cursorPosition()
                 model = self.model()
-                text0 = commandLineEdit.text()[:cursorPosition]
-                text1 = commandLineEdit.text()[cursorPosition:]
+                text0 = lineEdit.text()[:cursorPosition]
+                text1 = lineEdit.text()[cursorPosition:]
                 for index in selectedIndexes:
                     rows.append(index.row())
                     columns.append(index.column())
@@ -251,42 +256,42 @@ class MyView(QTableView):
                         text0
                         )
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
+                        lineEdit.setCursorPosition(cursorPosition)
                 elif globals_.REGEXP4.search(text0):
                     newText = globals_.REGEXP4.sub(
                         '['+alphanumeric1+':'+alphanumeric2+']',
                         text0
                         )
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
+                        lineEdit.setCursorPosition(cursorPosition)
                 elif text0 == '=':
                     newText = \
                         text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
+                        lineEdit.setCursorPosition(cursorPosition)
                 elif text0.endswith(('*', '+', '-', '/', '(', ',')):
                     newText = \
                         text0 + '[' + alphanumeric1 + ':' + alphanumeric2 + ']'
                     finalText = newText + text1
-                    commandLineEdit.clear()
-                    commandLineEdit.setText(finalText)
+                    lineEdit.clear()
+                    lineEdit.setText(finalText)
                     if text1:
                         cursorPosition += len(newText) - len(text0)
-                        commandLineEdit.setCursorPosition(cursorPosition)
-                commandLineEdit.setFocus(Qt.OtherFocusReason)
-                commandLineEdit.deselect()
+                        lineEdit.setCursorPosition(cursorPosition)
+                lineEdit.setFocus(Qt.OtherFocusReason)
+                lineEdit.deselect()
         super().selectionChanged(selected, deselected)
         self.overlay.createRect()
 
