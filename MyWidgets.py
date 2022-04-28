@@ -1606,3 +1606,19 @@ class PlotConf(QWidget):
         commonLayout.addWidget(self.addBttn, 4, 0)
         commonLayout.addWidget(self.rmBttn, 4, 1)
         self.setLayout(commonLayout)
+
+    def removeGraph(self):
+        name = self.graphSelect.currentText()
+        idx = self.graphSelect.currentIndex()
+        location = self.namesRecord[name]
+        graph = self.view.graphs[location]
+        self.rearrangeItems(graph)
+        self.view.scene().removeItem(graph)
+        self.graphSelect.removeItem(idx)
+        del self.namesRecord[name]
+        self.view.c -= 1
+        self.xEdit.clear()
+        self.yEdit.clear()
+        self.x2Edit.clear()
+        self.y2Edit.clear()
+        self.nEdit.clear()
