@@ -1745,3 +1745,49 @@ class PlotConf(QWidget):
                 self.nEdit.text()
                 )
         self.activeLE = None
+
+    def getArray(self, text, option='default'):
+        array = globals_.REGEXP1.findall(text)
+        model = self.parent().parent().model
+        if len(array) > 1:
+            raise RuntimeError(
+                'Not a valid array'
+                )
+        if array:
+            start, end = globals_.REGEXP2.findall(text)
+            start = MainWindow.getCoord(start)
+            end = MainWindow.getCoord(end)
+            rows = end[0] - start[0] + 1
+            cols = end[1] - start[1] + 1
+            array = np.zeros((rows, cols), dtype=np.float)
+            if option == 'bar':
+                check = model.dataContainer[start[0], start[1]]
+                if type(check) is str:
+                    array = np.zeros((rows, cols), dtype='<U7')
+            if option == 'pie':
+                array = np.zeros((rows, cols), dtype='<U7')
+            for y, row in enumerate(range(start[0], end[0]+1)):
+                for x, col in enumerate(range(start[1], end[1]+1)):
+                    if type(array[0][0]) is not np.str_:
+                        number = complex(
+                            model.dataContainer[row, col]
+                            )
+                        array[y, x] = number.real
+                    else:
+                        str_ = model.dataContainer[row, col]
+                        array[y, x] = str_
+            return array
+        else:
+            compact = globals_.REGEXP2.findall(text)
+            if not compact or len(compact) > 1:
+                print('this should not print')
+                raise RuntimeError(
+                    'Not a valid array'
+                    )
+            row, col = MainWindow.getCoord(compact[0])
+            if type(model.dataContainer[row, col]) is not np.ndarray:
+                raise RuntimeError(
+                    'Not an array type'
+                    )
+            else:
+                return model.dataContainer[row, col]
