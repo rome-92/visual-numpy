@@ -1447,3 +1447,162 @@ class PlotMenu(QMainWindow):
     def closeEvent(self, event):
         super().closeEvent(event)
         self.parent().plotMenu = None
+
+
+class PlotConf(QWidget):
+    def __init__(self, parent=None, *, view):
+        super().__init__(parent)
+        self.view = view
+        self.activeLE = None
+        self.namesRecord = {}
+
+        pW = QWidget()
+        plotLayout = QGridLayout()
+        xLabel = QLabel('x')
+        self.xEdit = LinkedLineEdit()
+        yLabel = QLabel('y')
+        self.yEdit = LinkedLineEdit()
+        self.addToCurrent = QPushButton('Add to current')
+
+        self.xEdit.active.connect(
+            self.setActiveLE
+            )
+        self.yEdit.active.connect(
+            self.setActiveLE
+            )
+        self.addToCurrent.clicked.connect(self.validateInput)
+
+        plotLayout.addWidget(xLabel, 0, 0)
+        plotLayout.addWidget(self.xEdit, 0, 1)
+        plotLayout.addWidget(yLabel, 1, 0)
+        plotLayout.addWidget(self.yEdit, 1, 1)
+        plotLayout.addWidget(self.addToCurrent, 2, 1)
+        pW.setLayout(plotLayout)
+
+        sW = QWidget()
+        scatterLayout = QGridLayout()
+        x2Label = QLabel('x')
+        self.x2Edit = LinkedLineEdit()
+        y2Label = QLabel('y')
+        self.y2Edit = LinkedLineEdit()
+
+        self.x2Edit.active.connect(
+            self.setActiveLE
+            )
+        self.y2Edit.active.connect(
+            self.setActiveLE
+            )
+
+        scatterLayout.addWidget(x2Label, 0, 0)
+        scatterLayout.addWidget(self.x2Edit, 0, 1)
+        scatterLayout.addWidget(y2Label, 1, 0)
+        scatterLayout.addWidget(self.y2Edit, 1, 1)
+        sW.setLayout(scatterLayout)
+
+        bW = QWidget()
+        barLayout = QGridLayout()
+        x3Label = QLabel('x coords or labels:')
+        self.x3Edit = LinkedLineEdit()
+        y3Label = QLabel('values (bars height):')
+        self.y3Edit = LinkedLineEdit()
+
+        self.x3Edit.active.connect(
+            self.setActiveLE
+            )
+        self.y3Edit.active.connect(
+            self.setActiveLE
+            )
+
+        barLayout.addWidget(x3Label, 0, 0)
+        barLayout.addWidget(self.x3Edit, 0, 1)
+        barLayout.addWidget(y3Label, 1, 0)
+        barLayout.addWidget(self.y3Edit, 1, 1)
+        bW.setLayout(barLayout)
+
+        hW = QWidget()
+        histLayout = QGridLayout()
+        x4Label = QLabel('x:')
+        self.x4Edit = LinkedLineEdit()
+        binsLabel = QLabel('bins:')
+        self.binsEdit = LinkedLineEdit()
+        rangeLabel = QLabel('range:')
+        self.rangeEdit = LinkedLineEdit()
+        densityLabel = QLabel('density:')
+        self.density = QCheckBox()
+
+        self.x4Edit.active.connect(
+            self.setActiveLE
+            )
+        self.binsEdit.active.connect(
+            self.setActiveLE
+            )
+        self.rangeEdit.active.connect(
+            self.setActiveLE
+            )
+
+        histLayout.addWidget(x4Label, 0, 0)
+        histLayout.addWidget(self.x4Edit, 0, 1)
+        histLayout.addWidget(binsLabel, 1, 0)
+        histLayout.addWidget(self.binsEdit, 1, 1)
+        histLayout.addWidget(rangeLabel, 2, 0)
+        histLayout.addWidget(self.rangeEdit, 2, 1)
+        histLayout.addWidget(densityLabel, 3, 0)
+        histLayout.addWidget(self.density, 3, 1)
+        hW.setLayout(histLayout)
+
+        pieW = QWidget()
+        pieLayout = QGridLayout()
+        x5Label = QLabel('x:')
+        self.x5Edit = LinkedLineEdit()
+        pLabel = QLabel('labels:')
+        self.pieLEdit = LinkedLineEdit()
+
+        self.x5Edit.active.connect(
+            self.setActiveLE
+            )
+        self.pieLEdit.active.connect(
+            self.setActiveLE)
+
+        pieLayout.addWidget(x5Label, 0, 0)
+        pieLayout.addWidget(self.x5Edit, 0, 1)
+        pieLayout.addWidget(pLabel, 1, 0)
+        pieLayout.addWidget(self.pieLEdit, 1, 1)
+        pieW.setLayout(pieLayout)
+
+        commonLayout = QGridLayout()
+        gLabel = QLabel('Select graph:')
+        self.graphSelect = QComboBox()
+        tLabel = QLabel('Select type:')
+        self.typeSelect = QComboBox()
+        nLabel = QLabel('Graph name:')
+        self.nEdit = QLineEdit()
+        self.addBttn = QPushButton('New graph')
+        self.rmBttn = QPushButton('Remove graph')
+        self.stackW = QStackedWidget()
+
+        self.graphSelect.addItem('--')
+        self.graphSelect.currentIndexChanged.connect(
+            self.updateInfo
+            )
+        self.typeSelect.addItems(globals_.GRAPH_TYPES)
+        self.typeSelect.currentIndexChanged.connect(
+            self.stackW.setCurrentIndex
+            )
+        self.addBttn.clicked.connect(self.validateInput)
+        self.rmBttn.clicked.connect(self.removeGraph)
+        self.stackW.addWidget(pW)
+        self.stackW.addWidget(sW)
+        self.stackW.addWidget(bW)
+        self.stackW.addWidget(hW)
+        self.stackW.addWidget(pieW)
+
+        commonLayout.addWidget(gLabel, 0, 0)
+        commonLayout.addWidget(self.graphSelect, 0, 1)
+        commonLayout.addWidget(tLabel, 1, 0)
+        commonLayout.addWidget(self.typeSelect, 1, 1)
+        commonLayout.addWidget(self.stackW, 2, 0, 2, 2)
+        commonLayout.addWidget(nLabel, 3, 0)
+        commonLayout.addWidget(self.nEdit, 3, 1)
+        commonLayout.addWidget(self.addBttn, 4, 0)
+        commonLayout.addWidget(self.rmBttn, 4, 1)
+        self.setLayout(commonLayout)
