@@ -1949,3 +1949,45 @@ class PlotView(QGraphicsView):
         )
         self.c += 1
         return (widget, y, x)
+
+    def wheelEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier:
+            hScrollB = self.horizontalScrollBar()
+            hSVal = hScrollB.value()
+            delta = event.angleDelta().y()
+            hScrollB.setValue(hSVal + delta)
+        elif event.modifiers() == Qt.ShiftModifier:
+            vScrollB = self.verticalScrollBar()
+            vSVal = vScrollB.value()
+            delta = -event.angleDelta().y()
+            vScrollB.setValue(vSVal + delta)
+        else:
+            factor = 1.41**(-event.angleDelta().y()/240.0)
+            self.scale(factor, factor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MiddleButton:
+            self.mouseInitPos = event.pos()
+            hScrollB = self.horizontalScrollBar()
+            self.hSVal = hScrollB.value()
+            vScrollB = self.verticalScrollBar()
+            self.vSVal = vScrollB.value()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MiddleButton:
+            hScrollB = self.horizontalScrollBar()
+            vScrollB = self.verticalScrollBar()
+            pos = event.pos()
+            x = pos.x()
+            y = pos.y()
+            dx = -(x - self.mouseInitPos.x())
+            dy = -(y - self.mouseInitPos.y())
+            hScrollB.setValue(self.hSVal + dx)
+            vScrollB.setValue(self.vSVal + dy)
+        else:
+            super().mouseMoveEvent(event)
+
+    def minimumSizeHint(self):
+        return QSize(522, 467)
