@@ -1418,7 +1418,12 @@ class PlotWidget(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         layout = QVBoxLayout(self)
-        static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        layout.addWidget(NavigationToolbar(static_canvas, self))
-        layout.addWidget(static_canvas)
-        self.ax = static_canvas.figure.subplots()
+        self.static_canvas = FigureCanvas(Figure(figsize=(5, 4)))
+        self.nav = NavigationToolbar(self.static_canvas, self)
+        layout.addWidget(self.nav)
+        layout.addWidget(self.static_canvas)
+        self.ax = self.static_canvas.figure.subplots()
+
+    def saveData(self, **vargs):
+        for k, v in vargs.items():
+            exec(f'self.{k} = v')
