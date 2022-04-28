@@ -64,7 +64,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.12'
+version = '3.0.0-alpha.12-plot'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 4
 
@@ -1991,3 +1991,11 @@ class PlotView(QGraphicsView):
 
     def minimumSizeHint(self):
         return QSize(522, 467)
+
+
+class LinkedLineEdit(QLineEdit):
+    active = Signal()
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.active.emit()
