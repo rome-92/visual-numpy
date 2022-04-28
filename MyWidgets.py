@@ -1622,3 +1622,32 @@ class PlotConf(QWidget):
         self.x2Edit.clear()
         self.y2Edit.clear()
         self.nEdit.clear()
+
+    def rearrangeItems(self, g):
+        if self.view.c == (self.view.side-1)**2:
+            self.view.square = (self.view.side-1)**2
+            self.view.side -= 1
+        c = self.view.c - 1
+        side = self.view.side
+        square = self.view.square
+        if c == square:
+            side += 1
+            square = side ** 2
+        insert = square - c
+        rows = insert // side
+        if rows > 0 and insert > side:
+            rows += (insert % side)
+            y = side - rows
+            x = side - 1
+        else:
+            y = side - 1
+            x = side - insert
+        last = self.view.graphs[y, x]
+        if last == g:
+            return
+        pos = g.scenePos()
+        last.setPos(pos)
+        gCoord = self.namesRecord[g.widget().title]
+        self.view.graphs[gCoord] = last
+        del self.view.graphs[y, x]
+        self.namesRecord[last.widget().title] = gCoord
