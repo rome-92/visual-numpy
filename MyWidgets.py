@@ -1427,3 +1427,23 @@ class PlotWidget(QWidget):
     def saveData(self, **vargs):
         for k, v in vargs.items():
             exec(f'self.{k} = v')
+
+
+class PlotMenu(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.scene = QGraphicsScene()
+        self.pView = PlotView(self.scene)
+        self.conf = PlotConf(view=self.pView)
+        mainSplitter = QSplitter()
+        mainSplitter.addWidget(self.pView)
+        mainSplitter.addWidget(self.conf)
+        self.setCentralWidget(mainSplitter)
+        mainSplitter.setStretchFactor(0, 1)
+        mainSplitter.setStretchFactor(1, 0)
+        self.setWindowTitle('Plot Menu')
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent().plotMenu = None
