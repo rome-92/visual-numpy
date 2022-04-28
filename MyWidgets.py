@@ -1867,3 +1867,52 @@ class PlotConf(QWidget):
         index = self.graphSelect.findText(title)
         self.namesRecord[title] = (row, col)
         self.graphSelect.setCurrentIndex(index)
+
+    def updateInfo(self, idx):
+        txt = self.graphSelect.itemText(idx)
+        if txt == '--':
+            self.xEdit.clear()
+            self.yEdit.clear()
+            self.x2Edit.clear()
+            self.y2Edit.clear()
+            self.nEdit.clear()
+            self.view.setTransform(self.view.originalTransform)
+            return
+        proxyW = self.view.graphs[self.namesRecord[txt]]
+        graph = proxyW.widget()
+        self.view.fitInView(proxyW)
+        type_ = graph.type_
+        if type_ == 'plot':
+            tIdx = self.typeSelect.findText('plot')
+            self.typeSelect.setCurrentIndex(tIdx)
+            self.xEdit.setText(graph.x)
+            self.yEdit.setText(graph.y)
+            self.nEdit.setText(graph.title)
+        elif type_ == 'scatter':
+            tIdx = self.typeSelect.findText('scatter')
+            self.typeSelect.setCurrentIndex(tIdx)
+            self.x2Edit.setText(graph.x)
+            self.y2Edit.setText(graph.y)
+            self.nEdit.setText(graph.title)
+        elif type_ == 'bar':
+            tIdx = self.typeSelect.findText('bar')
+            self.typeSelect.setCurrentIndex(tIdx)
+            self.x3Edit.setText(graph.x)
+            self.y3Edit.setText(graph.y)
+            self.nEdit.setText(graph.title)
+        elif type_ == 'histogram':
+            tIdx = self.typeSelect.findText('histogram')
+            self.typeSelect.setCurrentIndex(tIdx)
+            self.x4Edit.setText(graph.x)
+            self.binsEdit.setText(graph.bins)
+            self.nEdit.setText(graph.title)
+        elif type_ == 'pie':
+            tIdx = self.typeSelect.findText('pie')
+            self.typeSelect.setCurrentIndex(tIdx)
+            self.x5Edit.setText(graph.x)
+            self.pieLEdit.setText(graph.labels)
+            self.nEdit.setText(graph.title)
+
+    def setActiveLE(self):
+        edit = self.sender()
+        self.activeLE = edit
