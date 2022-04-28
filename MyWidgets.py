@@ -1651,3 +1651,97 @@ class PlotConf(QWidget):
         self.view.graphs[gCoord] = last
         del self.view.graphs[y, x]
         self.namesRecord[last.widget().title] = gCoord
+
+    def validateInput(self):
+        graphType = self.typeSelect.currentText()
+        if not self.nEdit.text():
+            self.nEdit.setText(
+                'Graph {}'.format(self.view.c))
+        if self.graphSelect.findText(self.nEdit.text()) != -1:
+            self.nEdit.setText(
+                'Graph {}'.format(self.view.c)
+                )
+        while self.graphSelect.findText(self.nEdit.text()) != -1:
+            self.nEdit.setText(
+                'Graph {}'.format(self.view.c+1)
+                )
+        if graphType == 'plot' or graphType == 'scatter':
+            try:
+                if graphType == 'plot':
+                    x = self.getArray(self.xEdit.text())
+                    y = self.getArray(self.yEdit.text())
+                else:
+                    x = self.getArray(self.x2Edit.text())
+                    y = self.getArray(self.y2Edit.text())
+
+                if x.shape != y.shape:
+                    raise RuntimeError(
+                        'arrays must be of equal shape')
+            except Exception as e:
+                print(e)
+            else:
+                if graphType == 'plot':
+                    if self.sender().text() != 'Add to current':
+                        self.requestGraph(
+                            'plot', x, y, self.nEdit.text()
+                            )
+                    else:
+                        coords = self.namesRecord.get(
+                            self.graphSelect.currentText(),
+                            'null')
+                        if coords != 'null':
+                            graph = self.view.graphs[coords].widget()
+                            graph.ax.plot(x, y)
+                            graph.ax.figure.canvas.draw()
+                else:
+                    self.requestGraph(
+                        'scatter', x, y,
+                        self.nEdit.text()
+                        )
+        elif graphType == 'bar':
+            x = self.getArray(self.x3Edit.text(), option='bar')
+            y = self.getArray(self.y3Edit.text())
+            x = x.ravel()
+            y = y.ravel()
+            if x.size != y.size:
+                raise RuntimeError(
+                    'arrays must be of equal shape')
+            else:
+                self.requestGraph(
+                    'bar', x, y,
+                    self.nEdit.text()
+                    )
+        elif graphType == 'histogram':
+            x = self.getArray(self.x4Edit.text())
+            bins = self.binsEdit.text()
+            if bins.isdigit():
+                bins = int(bins)
+            else:
+                bins = self.getArray(self.binsEdit.text())
+            range_ = self.rangeEdit.text()
+            if range_:
+                try:
+                    range_ = tuple(range_)
+                    if len(range_) != 2:
+                        raise RuntimeError(
+                            'range must be a 2 length tuple'
+                            )
+                except Exception as e:
+                    print(e)
+                    return
+            else:
+                range_ = None
+            density = self.density.isChecked()
+            self.requestGraph(
+                'histogram', x, bins,
+                range_, density,
+                self.nEdit.text()
+                )
+        elif graphType == 'pie':
+            x = self.getArray(self.x5Edit.text())
+            labels = self.getArray(self.pieLEdit.text(), option='pie')
+            self.requestGraph(
+                'pie', x, labels,
+                self.nEdit.text()
+                )
+        self.activeLE = None
