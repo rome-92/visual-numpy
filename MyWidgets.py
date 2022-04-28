@@ -27,17 +27,23 @@ import pickle
 import copy
 import weakref
 
-from PySide6.QtCore import QTimer, QSize, QEvent, Qt, Signal
+from PySide6.QtCore import (
+    QTimer, QSize,
+    QEvent, Qt, Signal
+    )
 from PySide6.QtWidgets import (
     QMainWindow, QLineEdit, QToolBar,
     QLabel, QFileDialog, QMessageBox,
     QFontComboBox, QComboBox, QColorDialog,
     QPushButton, QVBoxLayout, QWidget,
+    QGridLayout, QGraphicsScene, QGraphicsView,
+    QSplitter, QStackedWidget, QCheckBox
     )
 from PySide6.QtGui import (
     QAction, QGuiApplication,
     QActionGroup, QFont,
-    QPixmap, QBrush, QColor)
+    QPixmap, QBrush, QColor
+    )
 from PySide6 import __version__ as PYSIDE6_VERSION
 from PySide6.QtCore import __version__ as QT_VERSION
 try:
@@ -72,6 +78,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         """Initialize  MainWindow widgets and actions"""
         super().__init__(parent)
+        self.plotMenu = None
         self.commandLineEdit = CommandLineEdit()
         self.view = MyView(self)
         self.view.setModel(MyModel(self.view))
@@ -196,13 +203,15 @@ class MainWindow(QMainWindow):
         saveArrayAs.setShortcut('Ctrl+J')
         saveArrayAs.setStatusTip('Save Array in .npy format')
         saveArrayAs.triggered.connect(self.saveArrayAs)
-        plot = QAction('P&lot', self)
-        plot.setShortcut('Ctrl+L')
-        plot.setStatusTip('Plot given x and y arrays')
-        plot.triggered.connect(self.plot)
+        fastPlot = QAction('Fast plot', self)
+        fastPlot.setShortcut('Ctrl+L')
+        fastPlot.setStatusTip('Plot given x and y arrays')
+        fastPlot.triggered.connect(self.plot)
+        plot = QAction('Plot', self)
+        plot.triggered.connect(self.showPlotMenu)
         self.view.addActions((
             copy, cut, paste, merge, unmerge, saveArrayAs,
-            plot
+            fastPlot
             ))
         if not PLOT:
             plot.setDisabled(True)
@@ -227,6 +236,8 @@ class MainWindow(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(exportFile)
         fileMenu.addAction(importFile)
+        plotMenu = mainMenu.addMenu('Plot')
+        plotMenu.addAction(plot)
         formatMenu = mainMenu.addMenu('For&mat')
         formatMenu.addAction(thsndsSep)
         helpMenu = self.menuBar().addMenu('&Help')
@@ -950,6 +961,11 @@ class MainWindow(QMainWindow):
         self.view.model().dataChanged.emit(selected[0], selected[-1])
         self.view.saveToHistory()
 
+    def showPlotMenu(self):
+        self.plotMenu = PlotMenu(self)
+        self.plotMenu.model = self.view.model()
+        self.plotMenu.show()
+
     def plot(self):
         model = self.view.model()
         selected = self.view.selectedIndexes()
@@ -1019,7 +1035,8 @@ class MainWindow(QMainWindow):
                 )
             )
 
-    def getCoord(self, index):
+    @staticmethod
+    def getCoord(index):
         """Get row, column (y, x) coordinates from alphanumeric coord"""
         letters = globals_.LETTERS_REG_EXP.search(index).group()
         numbers = globals_.NUMBERS_REG_EXP.search(index).group()
