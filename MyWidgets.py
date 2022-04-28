@@ -1791,3 +1791,79 @@ class PlotConf(QWidget):
                     )
             else:
                 return model.dataContainer[row, col]
+
+    def requestGraph(self, type_, *vargs):
+        if type_ == 'plot':
+            x, y, title = vargs
+            graph, row, col = self.view.addGraph()
+            graph.ax.plot(x, y)
+            graph.ax.set_title(title)
+            graph.saveData(
+                type_=type_,
+                x=self.xEdit.text(),
+                y=self.yEdit.text(),
+                title=title
+                )
+        elif type_ == 'scatter':
+            x, y, title = vargs
+            graph, row, col = self.view.addGraph()
+            graph.ax.scatter(x, y)
+            graph.ax.set_title(title)
+            graph.saveData(
+                type_=type_,
+                x=self.x2Edit.text(),
+                y=self.y2Edit.text(),
+                title=title
+                )
+        elif type_ == 'bar':
+            x, y, title = vargs
+            graph, row, col = self.view.addGraph()
+            graph.ax.bar(x, y)
+            graph.ax.set_title(title)
+            graph.saveData(
+                type_=type_,
+                x=self.x3Edit.text(),
+                y=self.y3Edit.text(),
+                title=title
+                )
+        elif type_ == 'histogram':
+            x, bins, range_, density, title = vargs
+            if type(bins) is int:
+                minX = min(x)
+                maxX = max(x)
+                xticks = np.linspace(minX, maxX, bins+1)
+                xticks = np.around(xticks, 2)
+            else:
+                xticks = bins
+            graph, row, col = self.view.addGraph()
+            graph.ax.hist(
+                x, bins, range_, density=density,
+                edgecolor='black'
+                )
+            graph.ax.set_title(title)
+            graph.ax.set_xticks(xticks)
+            graph.saveData(
+                type_=type_,
+                x=self.x4Edit.text(),
+                bins=self.binsEdit.text(),
+                range_=range_,
+                density=density,
+                title=title
+                )
+        elif type_ == 'pie':
+            x, labels, title = vargs
+            graph, row, col = self.view.addGraph()
+            graph.ax.pie(
+                x, labels=labels
+                )
+            graph.ax.set_title(title)
+            graph.saveData(
+                type_=type_,
+                x=self.x5Edit.text(),
+                labels=labels
+                )
+
+        self.graphSelect.addItem(title)
+        index = self.graphSelect.findText(title)
+        self.namesRecord[title] = (row, col)
+        self.graphSelect.setCurrentIndex(index)
