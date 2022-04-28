@@ -1916,3 +1916,36 @@ class PlotConf(QWidget):
     def setActiveLE(self):
         edit = self.sender()
         self.activeLE = edit
+
+
+class PlotView(QGraphicsView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.mouseInitPos = None
+        self.c = 0
+        self.square = 1
+        self.side = 1
+        self.graphs = {}
+        self.originalTransform = self.transform()
+
+    def addGraph(self):
+        widget = PlotWidget()
+        if self.c == self.square:
+            self.side += 1
+            self.square = self.side ** 2
+        insert = self.square - self.c
+        rows = insert // self.side
+        if rows > 0 and insert > self.side:
+            rows += (insert % self.side)
+            y = self.side - rows
+            x = self.side - 1
+        else:
+            y = self.side - 1
+            x = self.side - insert
+        self.graphs[y, x] = self.scene().addWidget(widget)
+        self.graphs[y, x].setPos(
+            x*widget.size().width(),
+            y*widget.size().height()
+        )
+        self.c += 1
+        return (widget, y, x)
