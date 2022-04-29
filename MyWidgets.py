@@ -1739,6 +1739,7 @@ class PlotConf(QWidget):
                 )
         elif graphType == 'pie':
             x = self.getArray(self.x5Edit.text())
+            x = x.ravel()
             labels = self.getArray(self.pieLEdit.text(), option='pie')
             self.requestGraph(
                 'pie', x, labels,
@@ -1780,7 +1781,6 @@ class PlotConf(QWidget):
         else:
             compact = globals_.REGEXP2.findall(text)
             if not compact or len(compact) > 1:
-                print('this should not print')
                 raise RuntimeError(
                     'Not a valid array'
                     )
