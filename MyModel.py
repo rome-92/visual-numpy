@@ -315,10 +315,16 @@ class MyModel(QAbstractTableModel):
                         else:
                             return '{:d}'.format(int(returnValue.real))
                     else:
+                        mainW = self.parent().parent()
+                        decimals = mainW.decimalsSpinBox.value()
                         if self.thousandsSep:
-                            return '{:,.8f}'.format(returnValue.real)
+                            return '{0:,.{1}f}'.format(
+                                returnValue.real, decimals
+                                )
                         else:
-                            return '{:.8f}'.format(returnValue.real)
+                            return '{0:.{1}f}'.format(
+                                returnValue.real, decimals
+                                )
                 else:
                     return str(returnValue).strip('()')
             except ValueError:

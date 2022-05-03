@@ -37,7 +37,8 @@ from PySide6.QtWidgets import (
     QFontComboBox, QComboBox, QColorDialog,
     QPushButton, QVBoxLayout, QWidget,
     QGridLayout, QGraphicsScene, QGraphicsView,
-    QSplitter, QStackedWidget, QCheckBox
+    QSplitter, QStackedWidget, QCheckBox,
+    QSpinBox
     )
 from PySide6.QtGui import (
     QAction, QGuiApplication,
@@ -98,6 +99,7 @@ class MainWindow(QMainWindow):
         self.backgroundColor.color_ = (240, 240, 240, 255)
         self.fontColor.clicked.connect(self.showColorDialog)
         self.backgroundColor.clicked.connect(self.showColorDialog)
+        self.decimals = 4
         newFile = QAction('&New File', self)
         newFile.setShortcut('Ctrl+N')
         newFile.setStatusTip('Create new file')
@@ -263,6 +265,11 @@ class MainWindow(QMainWindow):
         self.pointSize.setCurrentIndex(6)
         self.fontsComboBox.activated.connect(self.updateFont)
         self.pointSize.activated.connect(self.updateFont)
+        decimalsLabel = QLabel('Decimals:')
+        self.decimalsSpinBox = QSpinBox()
+        self.decimalsSpinBox.setValue(4)
+        self.decimalsSpinBox.setRange(1, 8)
+        self.decimalsSpinBox.valueChanged.connect(self.updateDecimals)
         formatToolbar.addWidget(self.fontsComboBox)
         formatToolbar.addWidget(self.pointSize)
         formatToolbar.addWidget(self.fontColor)
@@ -277,6 +284,9 @@ class MainWindow(QMainWindow):
             self.italicAction,
             self.underlineAction
             ])
+        formatToolbar.addSeparator()
+        formatToolbar.addWidget(decimalsLabel)
+        formatToolbar.addWidget(self.decimalsSpinBox)
         self.addToolBar(Qt.TopToolBarArea, formatToolbar)
         self.commandLineEdit.returnCommand.connect(
             lambda t, row, col, c: self.calculate(t, row, col, com=c))
@@ -921,6 +931,10 @@ class MainWindow(QMainWindow):
             model.setData(index, font, role=Qt.FontRole)
         model.dataChanged.emit(selected[0], selected[-1])
         self.view.saveToHistory()
+
+    def updateDecimals(self, val):
+        self.decimals = val
+        self.view.model().layoutChanged.emit()
 
     def showColorDialog(self):
         """Show color dialog for color selection"""
