@@ -1164,11 +1164,6 @@ class MainWindow(QMainWindow):
                 if prev != 'null':
                     if isinstance(prev, np.ndarray):
                         com = False
-                        self.clean(
-                            rowIdx,
-                            colIdx,
-                            1,
-                            1)
                     else:
                         if len(result.shape) > 1:
                             x_cols = result.shape[1]
