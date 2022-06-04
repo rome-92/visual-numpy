@@ -306,6 +306,8 @@ class MyModel(QAbstractTableModel):
                 (index.row(), index.column()),
                 ''
                 )
+            if returnValue == '':
+                return ''
             try:
                 returnValue = complex(returnValue)
                 if returnValue.imag == 0:
