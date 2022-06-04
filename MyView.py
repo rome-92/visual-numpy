@@ -349,7 +349,7 @@ class MyView(QTableView):
                             rowIdx,
                             colIdx
                             )
-            self.circularReferenceCheck(possibleF.precedence, possibleF)
+            self.circularReferenceCheck(possibleF)
             if f_ := self.model().formulas.get(
                     (rowIdx, colIdx), None):
                 if f_.text != text:
@@ -362,17 +362,22 @@ class MyView(QTableView):
             self.model().formulas[rowIdx, colIdx] \
                 = possibleF
 
-    def circularReferenceCheck(self, precedence, possibleF):
+    def circularReferenceCheck(self, possibleF):
         """Check for circular references"""
-        if possibleF in precedence:
-            raise CircularReferenceError(
-                possibleF.row,
-                possibleF.col
-                )
-        else:
-            for f in precedence:
-                if f.precedence:
-                    self.circularReferenceCheck(f.precedence, possibleF)
+        marked = set()
+
+        def dfs(f):
+            marked.add(f)
+            if possibleF in f.precedence:
+                raise CircularReferenceError(
+                    possibleF.row,
+                    possibleF.col
+                    )
+            else:
+                for n in f.precedence:
+                    if n not in marked and n.precedence:
+                        dfs(n)
+        dfs(possibleF)
 
     def startDrag(self, supportedActions):
         """Begin dragging operation"""

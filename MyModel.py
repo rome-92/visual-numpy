@@ -253,7 +253,7 @@ class MyModel(QAbstractTableModel):
                 formula.row,
                 formula.col
                 )
-        self.parent().circularReferenceCheck(formula.precedence, formula)
+        self.parent().circularReferenceCheck(formula)
         formula.domain = newDomain
         formula.row = formula.row + newRowDiff
         formula.col = formula.col + newColumnDiff
