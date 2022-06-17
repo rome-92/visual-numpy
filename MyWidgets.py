@@ -65,7 +65,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.0.0-alpha.12-plot'
+version = '3.1.0-alpha'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 4
 
