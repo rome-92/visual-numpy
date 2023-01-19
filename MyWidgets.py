@@ -514,6 +514,9 @@ class MainWindow(QMainWindow):
             )
         if self.pasteMode == Qt.MoveAction:
             self.mimeDataToPaste = None
+            for action in self.view.actions():
+                if action.iconText() == 'Paste':
+                    action.setDisabled(True)
 
     def mergeCells(self):
         """Basic merge cell funcionality"""
