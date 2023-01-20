@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         fastPlot.setShortcut('Ctrl+L')
         fastPlot.setStatusTip('Plot given x and y arrays')
         fastPlot.triggered.connect(self.plot)
-        plot = QAction('Plot', self)
+        plot = QAction('Plot window', self)
         plot.triggered.connect(self.showPlotMenu)
         self.view.addActions((
             copy, cut, paste, merge, unmerge, saveArrayAs,
