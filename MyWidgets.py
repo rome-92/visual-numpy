@@ -111,7 +111,9 @@ class MainWindow(QMainWindow):
         saveFile = QAction('&Save', self)
         saveFile.setShortcut('Ctrl+S')
         saveFile.setStatusTip('Save File')
-        saveFile.triggered.connect(self.saveFile)
+        saveFile.triggered.connect(
+            lambda: self.saveFileAs(MainWindow.currentFile)
+            )
         saveFileAs = QAction('Save &As', self)
         saveFileAs.setShortcut('Shift+Ctrl+S')
         saveFileAs.setStatusTip('Save File As')
@@ -381,34 +383,6 @@ class MainWindow(QMainWindow):
                 info = 'There was an error importing '+name
                 self.statusBar().showMessage(info, 5000)
 
-    def saveFile(self):
-        """Save file into .vnp format"""
-        if MainWindow.currentFile:
-            name = MainWindow.currentFile
-            model = self.view.model().dataContainer
-            alignment = self.view.model().alignmentDict
-            fonts = self.view.model().fonts.copy()
-            foreground = self.view.model().foreground.copy()
-            background = self.view.model().background.copy()
-            self.encodeFonts(fonts)
-            self.encodeColors(foreground)
-            self.encodeColors(background)
-            formulas = copy.deepcopy(self.view.model().formulas)
-            self.prepareFormulas(formulas)
-            with open(name, 'wb') as myFile:
-                pickle.dump(MAGIC_NUMBER, myFile)
-                pickle.dump(FILE_VERSION, myFile)
-                pickle.dump(model, myFile)
-                pickle.dump(formulas, myFile)
-                pickle.dump(alignment, myFile)
-                pickle.dump(fonts, myFile)
-                pickle.dump(foreground, myFile)
-                pickle.dump(background, myFile)
-            info = name+' was succesfully saved'
-            self.statusBar().showMessage(info, 5000)
-        else:
-            self.saveFileAs()
-
     def prepareFormulas(self, f):
         """Substitute weakrefs objects for pickling"""
         for k in f:
@@ -420,13 +394,15 @@ class MainWindow(QMainWindow):
 
     def saveFileAs(self, name=None):
         """Save file into .vnp format"""
+        sender = self.sender().iconText() if self.sender() else None
         if not name:
-            name, notUsed = QFileDialog.getSaveFileName(
-                self,
-                'Save File',
-                '',
-                'vnp files (*.vnp)'
-                )
+            if not MainWindow.currentFile or sender == 'Save As':
+                name, notUsed = QFileDialog.getSaveFileName(
+                    self,
+                    'Save File',
+                    '',
+                    'vnp files (*.vnp)'
+                    )
         if name:
             name = name.replace('.vnp', '')
             model = self.view.model().dataContainer
