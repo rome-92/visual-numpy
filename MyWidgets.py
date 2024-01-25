@@ -1010,8 +1010,8 @@ class MainWindow(QMainWindow):
             if width > 2:
                 return
             if height * width == len(selected):
-                x = np.zeros((height), dtype=np.float)
-                y = np.zeros((height), dtype=np.float)
+                x = np.zeros((height), dtype=float)
+                y = np.zeros((height), dtype=float)
                 for ry, r in enumerate(range(topRow, bottomRow+1)):
                     for cx, c in enumerate(range(leftColumn, rightColumn+1)):
                         try:
@@ -1769,7 +1769,7 @@ class PlotConf(QWidget):
             end = MainWindow.getCoord(end)
             rows = end[0] - start[0] + 1
             cols = end[1] - start[1] + 1
-            array = np.zeros((rows, cols), dtype=np.float)
+            array = np.zeros((rows, cols), dtype=float)
             if option == 'bar':
                 check = model.dataContainer[start[0], start[1]]
                 if type(check) is str:
