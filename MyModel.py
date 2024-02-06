@@ -306,7 +306,9 @@ class MyModel(QAbstractTableModel):
                 (index.row(), index.column()),
                 ''
                 )
-            if returnValue == '':
+            if hasattr(returnValue, "ndim") and returnValue.ndim > 0:
+                return f'array {returnValue.shape}'
+            elif returnValue == '':
                 return ''
             try:
                 returnValue = complex(returnValue)
@@ -331,9 +333,6 @@ class MyModel(QAbstractTableModel):
                     return str(returnValue).strip('()')
             except ValueError:
                 return returnValue
-            except TypeError:
-                if hasattr(returnValue, 'ndim'):
-                    return f'array {returnValue.shape}'
         if role == Qt.BackgroundRole:
             if self.highlight:
                 if index.row() == self.highlight[0][0]:
@@ -376,7 +375,9 @@ class MyModel(QAbstractTableModel):
         if role == Qt.EditRole:
             if str(value) == self.data(index):
                 return True
-            if value != '':
+            if hasattr(value, "ndim"):
+                self.dataContainer[(index.row(), index.column())] = value
+            elif value != '':
                 self.dataContainer[(index.row(), index.column())] = value
             elif erase == 'y':
                 if (index.row(), index.column()) in self.dataContainer:

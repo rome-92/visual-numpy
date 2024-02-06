@@ -1161,7 +1161,7 @@ class MainWindow(QMainWindow):
             if com and result.ndim > 0:
                 invert = True
                 prev = model.dataContainer.get((rowIdx, colIdx), 'null')
-                if prev != 'null':
+                if not isinstance(prev, str):
                     if isinstance(prev, np.ndarray):
                         com = False
                     else:
