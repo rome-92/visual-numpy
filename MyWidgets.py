@@ -1566,6 +1566,7 @@ class PlotConf(QWidget):
         self.nEdit = QLineEdit()
         self.addBttn = QPushButton('New graph')
         self.rmBttn = QPushButton('Remove graph')
+        self.redrawBtnn = QPushButton('Redraw graph')
         self.stackW = QStackedWidget()
 
         self.graphSelect.addItem('--')
@@ -1578,6 +1579,7 @@ class PlotConf(QWidget):
             )
         self.addBttn.clicked.connect(self.validateInput)
         self.rmBttn.clicked.connect(self.removeGraph)
+        self.redrawBtnn.clicked.connect(self.validateInput)
         self.stackW.addWidget(pW)
         self.stackW.addWidget(sW)
         self.stackW.addWidget(bW)
@@ -1593,6 +1595,7 @@ class PlotConf(QWidget):
         commonLayout.addWidget(self.nEdit, 3, 1)
         commonLayout.addWidget(self.addBttn, 4, 0)
         commonLayout.addWidget(self.rmBttn, 4, 1)
+        commonLayout.addWidget(self.redrawBtnn, 5, 0, 1, 2)
         self.setLayout(commonLayout)
 
     def removeGraph(self):
@@ -1642,17 +1645,21 @@ class PlotConf(QWidget):
 
     def validateInput(self):
         graphType = self.typeSelect.currentText()
+        if self.sender().text() == 'Redraw graph':
+            redraw = True
+        else:
+            redraw = False
         if not self.nEdit.text():
             self.nEdit.setText(
                 'Graph {}'.format(self.view.c))
-        if self.graphSelect.findText(self.nEdit.text()) != -1:
+        if not redraw:
             self.nEdit.setText(
                 'Graph {}'.format(self.view.c)
                 )
-        while self.graphSelect.findText(self.nEdit.text()) != -1:
-            self.nEdit.setText(
-                'Graph {}'.format(self.view.c+1)
-                )
+            while self.graphSelect.findText(self.nEdit.text()) != -1:
+                self.nEdit.setText(
+                    'Graph {}'.format(self.view.c+1)
+                    )
         if graphType == 'plot' or graphType == 'scatter':
             try:
                 if graphType == 'plot':
@@ -1671,7 +1678,8 @@ class PlotConf(QWidget):
                 if graphType == 'plot':
                     if self.sender().text() != 'Add to current':
                         self.requestGraph(
-                            'plot', x, y, self.nEdit.text()
+                            'plot', x, y, self.nEdit.text(),
+                            redraw=redraw
                             )
                     else:
                         coords = self.namesRecord.get(
@@ -1684,7 +1692,8 @@ class PlotConf(QWidget):
                 else:
                     self.requestGraph(
                         'scatter', x, y,
-                        self.nEdit.text()
+                        self.nEdit.text(),
+                        redraw=redraw
                         )
         elif graphType == 'bar':
             x = self.getArray(self.x3Edit.text(), option='bar')
@@ -1697,7 +1706,8 @@ class PlotConf(QWidget):
             else:
                 self.requestGraph(
                     'bar', x, y,
-                    self.nEdit.text()
+                    self.nEdit.text(),
+                    redraw=redraw
                     )
         elif graphType == 'histogram':
             x = self.getArray(self.x4Edit.text())
@@ -1723,7 +1733,8 @@ class PlotConf(QWidget):
             self.requestGraph(
                 'histogram', x, bins,
                 range_, density,
-                self.nEdit.text()
+                self.nEdit.text(),
+                redraw=redraw
                 )
         elif graphType == 'pie':
             x = self.getArray(self.x5Edit.text())
@@ -1731,7 +1742,8 @@ class PlotConf(QWidget):
             labels = self.getArray(self.pieLEdit.text(), option='pie')
             self.requestGraph(
                 'pie', x, labels,
-                self.nEdit.text()
+                self.nEdit.text(),
+                redraw=redraw
                 )
         self.activeLE = None
 
@@ -1780,10 +1792,20 @@ class PlotConf(QWidget):
             else:
                 return model.dataContainer[row, col]
 
-    def requestGraph(self, type_, *vargs):
+    def requestGraph(self, type_, *vargs, redraw=False):
+        if redraw:
+            coords = self.namesRecord.get(
+                                self.graphSelect.currentText(),
+                                'null')
+            if coords != 'null':
+                graph = self.view.graphs[coords].widget()
+                graph.ax.clear()
+            else:
+                return
+        else:
+            graph, row, col = self.view.addGraph()
         if type_ == 'plot':
             x, y, title = vargs
-            graph, row, col = self.view.addGraph()
             graph.ax.plot(x, y)
             graph.ax.set_title(title)
             graph.saveData(
@@ -1794,7 +1816,6 @@ class PlotConf(QWidget):
                 )
         elif type_ == 'scatter':
             x, y, title = vargs
-            graph, row, col = self.view.addGraph()
             graph.ax.scatter(x, y)
             graph.ax.set_title(title)
             graph.saveData(
@@ -1805,7 +1826,6 @@ class PlotConf(QWidget):
                 )
         elif type_ == 'bar':
             x, y, title = vargs
-            graph, row, col = self.view.addGraph()
             graph.ax.bar(x, y)
             graph.ax.set_title(title)
             graph.saveData(
@@ -1823,7 +1843,6 @@ class PlotConf(QWidget):
                 xticks = np.around(xticks, 2)
             else:
                 xticks = bins
-            graph, row, col = self.view.addGraph()
             graph.ax.hist(
                 x, bins, range_, density=density,
                 edgecolor='black'
@@ -1840,7 +1859,6 @@ class PlotConf(QWidget):
                 )
         elif type_ == 'pie':
             x, labels, title = vargs
-            graph, row, col = self.view.addGraph()
             graph.ax.pie(
                 x, labels=labels
                 )
@@ -1850,11 +1868,13 @@ class PlotConf(QWidget):
                 x=self.x5Edit.text(),
                 labels=labels
                 )
-
-        self.graphSelect.addItem(title)
-        index = self.graphSelect.findText(title)
-        self.namesRecord[title] = (row, col)
-        self.graphSelect.setCurrentIndex(index)
+        if not redraw:
+            self.graphSelect.addItem(title)
+            index = self.graphSelect.findText(title)
+            self.namesRecord[title] = (row, col)
+            self.graphSelect.setCurrentIndex(index)
+        else:
+            graph.ax.figure.canvas.draw()
 
     def updateInfo(self, idx):
         txt = self.graphSelect.itemText(idx)
