@@ -65,7 +65,7 @@ from MyDelegate import MyDelegate
 import rcIcons
 import globals_
 
-version = '3.1.0-alpha'
+version = '3.1.1-alpha'
 MAGIC_NUMBER = 0x2384E
 FILE_VERSION = 4
 
@@ -560,7 +560,11 @@ class MainWindow(QMainWindow):
             height = bottomRow - topRow + 1
             width = rightColumn - leftColumn + 1
             if height * width == len(selected):
-                array = np.zeros((height, width), dtype=np.complex_)
+                # Provides numpy < 2.0 compatibility
+                if hasattr(np, 'complex_'):
+                    array = np.zeros((height, width), dtype=np.complex_)
+                else:
+                    array = np.zeros((height, width), dtype=np.complex128)
                 for y, row in enumerate(range(topRow, bottomRow+1)):
                     for x, column in enumerate(
                             range(leftColumn, rightColumn+1)):
@@ -1061,7 +1065,10 @@ class MainWindow(QMainWindow):
             columns = [c1, c2+1]
             height = rows[1] - rows[0]
             width = columns[1] - columns[0]
-            array = np.zeros((height, width), np.complex_)
+            if hasattr(np, 'complex_'):
+                array = np.zeros((height, width), np.complex_)
+            else:
+                array = np.zeros((height, width), np.complex128)
             for y, row in enumerate(range(rows[0], rows[1])):
                 for x, column in enumerate(range(columns[0], columns[1])):
                     element = model.dataContainer.get(
