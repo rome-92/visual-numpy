@@ -1091,8 +1091,11 @@ class MainWindow(QMainWindow):
                 )
         commandExecutable = globals_.REGEXP1.sub('{}', text)
         idPool = list(idPool)
+        exec_scope = {}
         for i1, i2 in zip(idPool, numpyArrayList):
-            exec(i1 + '= i2')
+            exec_scope['i2'] = i2
+            exec(i1 + '= i2', exec_scope)
+        idPool = [f"exec_scope['{id_}']" for id_ in idPool]
         commandExecutable = commandExecutable.format(*idPool)
         single = globals_.REGEXP2.findall(commandExecutable)
         singleIndexes = []
@@ -1115,8 +1118,9 @@ class MainWindow(QMainWindow):
                         + str(random.randint(0, 255))
                         )
                 idPool2.add(gen)
-                exec(gen + '= element')
-                singleElements.append(gen)
+                exec_scope['element'] = element
+                exec(gen + '= element', exec_scope)
+                singleElements.append(f"exec_scope['{gen}']")
             else:
                 try:
                     complex(element)
@@ -1129,6 +1133,7 @@ class MainWindow(QMainWindow):
         try:
             result = eval(commandExecutable)
         except Exception as e:
+            print(commandExecutable)
             print(e)
             return
         if not flag:
